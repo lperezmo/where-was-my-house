@@ -42,12 +42,16 @@ chart library, hand-rolled SVG.
 ## Develop
 
 ```bash
-npm install
-npm run dev          # http://localhost:5173
-vercel dev           # if you need the /api functions locally
+bun install
+bun run dev          # http://localhost:5173, /api included
 ```
 
-`npm run build` typechecks and builds to `dist/`.
+`bun run build` typechecks and builds to `dist/`.
+
+The `api/` functions run on Vercel's Bun runtime (`bunVersion: "1.x"` in
+`vercel.json`) and export the Web-standard `{ fetch(request) }` shape. `vite dev`
+mounts the same handlers behind a small Node-to-Request adapter, so the local
+server exercises the deployed code path.
 
 ## Accuracy
 

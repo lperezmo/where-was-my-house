@@ -1,5 +1,5 @@
 /**
- * Shared plumbing for the serverless handlers: JSON responses, upstream fetch
+ * Shared plumbing for the Bun-runtime handlers: JSON responses, upstream fetch
  * with a hard timeout, a bounded worker pool, and a small TTL cache.
  */
 
@@ -7,42 +7,27 @@ export const USER_AGENT = "where-was-my-house/0.1 (github.com/lperezmo/where-was
 
 const JSON_TYPE = "application/json; charset=utf-8";
 
-export function sendJson(res: any, status: number, body: unknown, cacheControl?: string): void {
-  res.statusCode = status;
-  res.setHeader("Content-Type", JSON_TYPE);
-  // Errors must never be cached by the edge, otherwise a transient upstream
-  // failure sticks around for the whole s-maxage window.
-  res.setHeader("Cache-Control", cacheControl ?? "no-store");
-  res.end(JSON.stringify(body));
+export function sendJson(status: number, body: unknown, cacheControl?: string): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": JSON_TYPE,
+      // Errors must never be cached by the edge, otherwise a transient upstream
+      // failure sticks around for the whole s-maxage window.
+      "Cache-Control": cacheControl ?? "no-store",
+    },
+  });
 }
 
-export function sendError(res: any, status: number, message: string): void {
-  sendJson(res, status, { error: message });
+export function sendError(status: number, message: string): Response {
+  return sendJson(status, { error: message });
 }
 
-/** Query params, preferring the platform-parsed object and falling back to the raw URL. */
-export function getQuery(req: any): Record<string, string> {
-  const out: Record<string, string> = {};
-  const q = req?.query;
-  if (q && typeof q === "object") {
-    for (const [k, v] of Object.entries(q)) {
-      if (Array.isArray(v)) {
-        if (v.length > 0) out[k] = String(v[0]);
-      } else if (v != null) {
-        out[k] = String(v);
-      }
-    }
-    if (Object.keys(out).length > 0) return out;
-  }
-  const raw = typeof req?.url === "string" ? req.url : "";
-  const i = raw.indexOf("?");
-  if (i >= 0) {
-    for (const [k, v] of new URLSearchParams(raw.slice(i + 1))) out[k] = v;
-  }
-  return out;
+export function getQuery(request: Request): URLSearchParams {
+  return new URL(request.url).searchParams;
 }
 
-export function parseNumber(value: string | undefined): number | null {
+export function parseNumber(value: string | null | undefined): number | null {
   if (value == null) return null;
   const s = value.trim();
   if (s === "") return null;
@@ -175,7 +160,7 @@ export class TtlCache<V> {
 }
 
 /** True for GET and HEAD; everything else is rejected with 405 by the handlers. */
-export function isReadMethod(req: any): boolean {
-  const m = typeof req?.method === "string" ? req.method.toUpperCase() : "GET";
+export function isReadMethod(request: Request): boolean {
+  const m = typeof request?.method === "string" ? request.method.toUpperCase() : "GET";
   return m === "GET" || m === "HEAD";
 }
