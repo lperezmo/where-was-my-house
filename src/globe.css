@@ -14,6 +14,41 @@
   display: none;
 }
 
+/* Overlays the same box the map will fill, so the swap moves nothing. */
+.pv-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: var(--bg);
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.pv-loading-ring {
+  width: clamp(84px, 34%, 176px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  border-top-color: var(--accent-dim);
+  animation: pv-spin 1.5s linear infinite;
+}
+
+.pv-loading[data-state="failed"] .pv-loading-ring {
+  animation: none;
+  border-top-color: var(--line);
+  opacity: 0.5;
+}
+
+@keyframes pv-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
 .pv-marker {
   pointer-events: none;
 }
@@ -74,5 +109,9 @@
   .pv-now .pv-pulse {
     animation: none;
     opacity: 0.3;
+  }
+
+  .pv-loading-ring {
+    animation: none;
   }
 }

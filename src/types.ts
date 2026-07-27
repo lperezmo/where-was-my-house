@@ -39,6 +39,23 @@ export interface ApiError {
   error: string;
 }
 
+export interface GeoUnit {
+  name: string;
+  maxMa: number;
+  minMa: number;
+  liths: string[];
+  environments: string[];
+  /** Coarse marine/non-marine read derived from the environment terms. */
+  setting: "marine" | "nonmarine" | "mixed" | "unknown";
+  refs: string[];
+}
+
+export interface GeologyResult {
+  /** False outside Macrostrat's coverage, which is largely North America. */
+  covered: boolean;
+  units: GeoUnit[];
+}
+
 export interface Period {
   name: string;
   startMa: number;
