@@ -24,7 +24,7 @@ const GAP_MA = 15;
 /** Mercator tiling cannot represent the caps, so geometry stops short of the poles. */
 const LAT_LIMIT = 84;
 
-/** Degrees of arc between the camera centre and the marker before the camera follows it. */
+/** Degrees of arc between the camera center and the marker before the camera follows it. */
 const FOLLOW_ARC = 46;
 
 /** Grace period after the user last touched the globe, so scrubbing does not yank their view. */
@@ -390,6 +390,7 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
 
   return {
     setTrack(next: Track) {
+      if (dead) return;
       track = next;
       steps = [...next.steps].sort((a, b) => a.ageMa - b.ageMa);
       userAdjusted = false;
@@ -404,11 +405,13 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
     },
 
     setAge(next: number) {
+      if (dead) return;
       ageMa = next;
       place(true);
     },
 
     destroy() {
+      if (dead) return;
       dead = true;
       ready = false;
       canvas.removeEventListener("pointerdown", onDown);
