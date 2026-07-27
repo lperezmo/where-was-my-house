@@ -1,4 +1,4 @@
-# Paleo Vantage
+# Where Was My House
 
 Enter an address, get a 540-million-year biography of that patch of ground: the
 path it took across the globe, the latitudes it sat at, the climate belts it
@@ -6,29 +6,27 @@ passed through, and the fossils actually found in the rock there.
 
 Built mobile-first. No API keys.
 
-## Prior art, and why this is different
+## Prior art
 
 Ian Webster's [Ancient Earth Globe](https://dinosaurpictures.org/ancient-earth)
-(2018) does the headline version of this: type an address, see where it was. It
-is free, well made, and went viral for good reason. If you want the quick look,
-use it.
+(2018) is the incumbent and it is good: type an address, see where it was, with
+nearby dinosaurs as a bonus. It is free and deservedly went viral. If you want
+the quick look, use it. [Paleolatitude.org](https://paleolatitude.org) covers the
+latitude question for researchers, interactively, back to 320 Ma.
 
-This is the deeper cut, and specifically:
+So the ideas here are not new. What is different is resolution and continuity:
 
 - **109 reconstructions at 5 to 10 Myr spacing**, against Ancient Earth's 26
-  steps at 15 to 150 Myr intervals. Yours scrubs continuously instead of
-  jumping between fixed slices.
-- **A drift track.** Ancient Earth teleports you between time steps. This draws
-  the continuous path your ground actually took across the planet.
-- **Paleolatitude over time as a chart.** The thing that most changes what a
-  place *was* is the latitude it sat at, and nobody plots it for a point.
-- **Fossils from the rock beneath you.** Paleobiology Database occurrences for
-  your location, filtered to the age you are looking at.
+  steps at 15 to 150 Myr intervals. This scrubs; that one jumps between slices.
+- **A continuous drift track** drawn across the globe, rather than a series of
+  disconnected positions.
+- **Paleolatitude charted over the full 540 Ma**, against Paleolatitude.org's
+  320 Ma, and plotted as a curve rather than returned as a number.
+- **Fossils as actual Paleobiology Database occurrences**, filtered to the age
+  you are scrubbed to, with their real age ranges, rather than a fixed list of
+  nearby dinosaurs.
 
-The parts exist separately: [PBDB Navigator](https://paleobiodb.org/navigator/)
-serves fossils to researchers, [Paleolatitude.org](https://paleolatitude.org)
-serves paleolatitude numbers to researchers. Neither is aimed at someone with an
-address. That combination for one point, told as a narrative, is the gap.
+That is a difference of degree, not of kind. Worth being honest about.
 
 ## Stack
 

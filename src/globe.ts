@@ -157,7 +157,7 @@ function trackFeatures(steps: TrackStep[]): FeatureCollection {
 function buildStyle(c: Palette): StyleSpecification {
   return {
     version: 8,
-    name: "paleo-vantage",
+    name: "where-was-my-house",
     projection: { type: "globe" },
     sky: {
       "sky-color": c.bg,

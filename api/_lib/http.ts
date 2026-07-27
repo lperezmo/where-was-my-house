@@ -3,7 +3,7 @@
  * with a hard timeout, a bounded worker pool, and a small TTL cache.
  */
 
-export const USER_AGENT = "paleo-vantage/0.1 (github.com/lperezmo/paleo-vantage)";
+export const USER_AGENT = "where-was-my-house/0.1 (github.com/lperezmo/where-was-my-house)";
 
 const JSON_TYPE = "application/json; charset=utf-8";
 
