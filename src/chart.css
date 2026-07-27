@@ -1,0 +1,232 @@
+/* Latitude chart and timescale scrubber. Colours build on the tokens in style.css. */
+
+.pv-chart {
+  --pv-track: #7ec8ff;
+  position: relative;
+  margin: 2px 0 14px;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: crosshair;
+}
+
+.pv-chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.pv-belt {
+  fill-opacity: 0.12;
+}
+
+.pv-belt-tropical {
+  fill: #e0a45e;
+}
+
+.pv-belt-subtropical {
+  fill: #c9ae72;
+  fill-opacity: 0.09;
+}
+
+.pv-belt-temperate {
+  fill: #6cbf95;
+  fill-opacity: 0.085;
+}
+
+.pv-belt-subpolar {
+  fill: #5f9fd0;
+  fill-opacity: 0.09;
+}
+
+.pv-belt-polar {
+  fill: #a3cbea;
+  fill-opacity: 0.13;
+}
+
+.pv-belt-label {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--text-dim);
+  fill-opacity: 0.5;
+}
+
+.pv-grid {
+  stroke: #e8edf4;
+  stroke-opacity: 0.07;
+  stroke-width: 1;
+}
+
+.pv-equator {
+  stroke: #e8edf4;
+  stroke-opacity: 0.38;
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+}
+
+.pv-frame {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.pv-tick {
+  font-size: 10px;
+  fill: var(--text-dim);
+  fill-opacity: 0.8;
+}
+
+.pv-tick-eq {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  fill-opacity: 1;
+}
+
+.pv-path {
+  fill: none;
+  stroke: var(--pv-track);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pv-point {
+  fill: var(--pv-track);
+}
+
+.pv-empty {
+  font-size: 12px;
+  fill: var(--text-dim);
+  fill-opacity: 0.75;
+  paint-order: stroke;
+  stroke: var(--bg-panel);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+.pv-chart[data-empty="1"] {
+  cursor: default;
+}
+
+.pv-cursor-line {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-opacity: 0.8;
+}
+
+.pv-cursor-dot {
+  fill: var(--accent);
+  stroke: var(--bg-panel);
+  stroke-width: 2;
+}
+
+.pv-cursor-label {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--accent);
+  paint-order: stroke;
+  stroke: var(--bg-panel);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+/* Scrubber */
+
+.pv-scrub {
+  position: relative;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pv-scrub-strip {
+  position: relative;
+  height: 34px;
+  touch-action: pan-y;
+  cursor: pointer;
+}
+
+.pv-scrub-svg {
+  display: block;
+  width: 100%;
+  height: 34px;
+}
+
+.pv-scrub-bg {
+  fill: var(--bg-raised);
+}
+
+.pv-scrub-band-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  fill: #1b1b1b;
+  fill-opacity: 0.72;
+  pointer-events: none;
+}
+
+.pv-scrub-hit {
+  position: absolute;
+  top: -5px;
+  left: 0;
+  width: 44px;
+  height: 44px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.pv-scrub-hit:active {
+  cursor: grabbing;
+}
+
+.pv-knob-halo {
+  fill: #0a0d12;
+  fill-opacity: 0.75;
+}
+
+.pv-knob-bar {
+  fill: #ffffff;
+}
+
+.pv-knob-dot {
+  fill: #ffffff;
+  stroke: #0a0d12;
+  stroke-width: 1.5;
+  stroke-opacity: 0.75;
+}
+
+.pv-scrub[data-empty="1"] .pv-scrub-knob {
+  opacity: 0.35;
+}
+
+.pv-scrub[data-empty="1"] .pv-scrub-strip,
+.pv-scrub[data-empty="1"] .pv-scrub-hit {
+  cursor: default;
+}
+
+.pv-scrub:focus-visible .pv-knob-dot {
+  fill: var(--accent);
+  stroke: #0a0d12;
+  r: 7;
+}
+
+.pv-scrub:focus-visible .pv-scrub-strip {
+  outline: 2px solid var(--accent-dim);
+  outline-offset: 2px;
+  border-radius: 7px;
+}
+
+.pv-scrub-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.7;
+}

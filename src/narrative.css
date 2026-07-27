@@ -1,0 +1,94 @@
+.fossils {
+  margin: 14px 0 0;
+}
+
+.fossils-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.fossils-head span {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-dim);
+}
+
+.fossil-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.fossil-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.fossil-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.fossil-name i {
+  font-style: italic;
+}
+
+.fossil-rank,
+.fossil-count {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #6b7a90;
+  white-space: nowrap;
+}
+
+.fossil-count {
+  padding: 1px 5px;
+  color: var(--text-dim);
+  background: var(--bg-raised);
+  border-radius: 999px;
+}
+
+.fossil-age {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.fossils-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.fossils-caveat {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7a90;
+}
+
+@media (max-width: 380px) {
+  .fossil-age {
+    flex: 1 0 100%;
+  }
+}
