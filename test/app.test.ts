@@ -221,18 +221,18 @@ test("the zoom stick flies from globe to map without leaving the screen", async 
   expect(map.style.pointerEvents).toBe("none");
 
   // happy-dom reports a zero-sized box, so the track is given a real one.
-  track.getBoundingClientRect = (() => ({ top: 0, height: 150, left: 0, width: 34 })) as never;
+  track.getBoundingClientRect = (() => ({ top: 0, height: 168, left: 0, width: 32 })) as never;
 
   const drag = (fraction: number) => {
     const e = new win.Event("pointermove", { bubbles: true });
-    Object.defineProperty(e, "clientY", { value: fraction * 150, configurable: true });
+    Object.defineProperty(e, "clientY", { value: fraction * 168, configurable: true });
     track.dispatchEvent(e);
   };
   track.dispatchEvent(new win.Event("pointerdown", { bubbles: true }));
 
   // Pulling down flies in: the globe fades out and the map takes the gestures.
-  drag(0.9);
-  expect(parseFloat(thumb.style.top)).toBeGreaterThan(80);
+  drag(0.95);
+  expect(parseFloat(thumb.style.top)).toBe(100);
   expect(Number(globe.style.opacity)).toBe(0);
   expect(map.getAttribute("aria-hidden")).toBe("false");
   expect(map.style.pointerEvents).toBe("auto");
@@ -247,8 +247,48 @@ test("the zoom stick flies from globe to map without leaving the screen", async 
   track.dispatchEvent(new win.Event("pointerup", { bubbles: true }));
 });
 
+test("the lever lands in notches rather than between them", async () => {
+  const { hasTiles } = await import("../src/config");
+  if (!hasTiles) return;
+  const { DETENTS } = await import("../src/map");
+
+  const track = $("#zoom-track");
+  const thumb = $("#zoom-thumb");
+  const stops = DETENTS.map((d) => d.value * 100);
+
+  track.getBoundingClientRect = (() => ({ top: 0, height: 168, left: 0, width: 32 })) as never;
+
+  // A drag that ends between two notches settles on the nearer one, so the map
+  // is never left scaling one tile level up to fill another's place.
+  track.dispatchEvent(new win.Event("pointerdown", { bubbles: true }));
+  for (const fraction of [0.13, 0.37, 0.62, 0.88, 1]) {
+    const e = new win.Event("pointermove", { bubbles: true });
+    Object.defineProperty(e, "clientY", { value: fraction * 168, configurable: true });
+    track.dispatchEvent(e);
+    expect(stops).toContain(parseFloat(thumb.style.top));
+  }
+  track.dispatchEvent(new win.Event("pointerup", { bubbles: true }));
+
+  // One key press is one whole tile level, all the way down and back.
+  const key = (k: string) => track.dispatchEvent(new win.KeyboardEvent("keydown", { key: k, bubbles: true }));
+  key("Home");
+  expect(track.getAttribute("aria-valuenow")).toBe("0");
+  for (let i = 1; i < DETENTS.length; i++) {
+    key("ArrowDown");
+    expect(track.getAttribute("aria-valuenow")).toBe(String(i));
+    expect(parseFloat(thumb.style.top)).toBeCloseTo(stops[i], 6);
+  }
+  // The gate ends at the data's own limit; pushing past it goes nowhere.
+  key("ArrowDown");
+  expect(track.getAttribute("aria-valuenow")).toBe(String(DETENTS.length - 1));
+  key("ArrowUp");
+  expect(track.getAttribute("aria-valuenow")).toBe(String(DETENTS.length - 2));
+  key("Home");
+});
+
 test("the stick and the map agree on where a zoom level sits", async () => {
-  const { zoomForValue, valueForZoom, mapOpacity, FADE_START } = await import("../src/map");
+  const { zoomForValue, valueForZoom, mapOpacity, DETENTS, FADE_START, FADE_END } =
+    await import("../src/map");
   const { TILE_MAX_ZOOM } = await import("../src/config");
 
   expect(zoomForValue(0)).toBe(0);
@@ -257,8 +297,21 @@ test("the stick and the map agree on where a zoom level sits", async () => {
   for (const z of [0, 1, 2.5, 4]) {
     expect(zoomForValue(valueForZoom(z))).toBeCloseTo(z, 6);
   }
-  // The globe owns the top of the travel outright.
+
+  // One notch for the globe and one per tile level, each on its own zoom.
+  expect(DETENTS.length).toBe(TILE_MAX_ZOOM + 2);
+  expect(DETENTS[0].name).toBe("Globe");
+  expect(DETENTS[0].detail).toBe("");
+  for (let i = 1; i < DETENTS.length; i++) {
+    expect(zoomForValue(DETENTS[i].value)).toBeCloseTo(i - 1, 6);
+    expect(DETENTS[i].detail).not.toBe("");
+  }
+
+  // The globe owns the top of the travel outright, and the crossfade is spent
+  // before the first map notch, so no notch is a mix of the globe and the map.
   expect(mapOpacity(0)).toBe(0);
   expect(mapOpacity(FADE_START)).toBe(0);
+  expect(FADE_END).toBeLessThan(DETENTS[1].value);
+  expect(mapOpacity(DETENTS[1].value)).toBe(1);
   expect(mapOpacity(1)).toBe(1);
 });

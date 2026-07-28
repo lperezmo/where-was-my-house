@@ -2,7 +2,7 @@ import { fetchFossils, fetchGeology, fetchTrack, geocode } from "./api";
 import { createLatitudeChart } from "./chart";
 import { renderFossils } from "./fossils";
 import { createGlobe } from "./globe";
-import { createMap, hasTiles } from "./map";
+import { createMap, DETENTS, hasTiles, mapOpacity, valueForStep } from "./map";
 import { createZoomStick } from "./zoomstick";
 import { beltFor, describe, periodAt } from "./narrative";
 import { capture, positionAt } from "./position";
@@ -148,7 +148,9 @@ splitEl.addEventListener("keydown", (e) => {
  */
 function flyToPick(lat: number, lon: number) {
   if (!hasTiles || !track) return;
-  const value = Math.max(zoom.value(), 0.45);
+  // Region: close enough that the pick was worth making, far enough that the
+  // surrounding coastline still says where on the plate you have landed.
+  const value = Math.max(zoom.value(), valueForStep(3));
   zoom.setValue(value, true);
   applyZoom(value, false);
   mapView.setCenter(lat, lon);
@@ -158,10 +160,10 @@ const stick = el("zoomstick");
 const mapEl = el("map");
 
 /**
- * The stick is an altitude control: the top is the globe seen from furthest
- * away, and pulling it down flies in until the map is at the finest zoom the
- * elevation model supports. The screen never changes, so the address, the
- * timeline and the theme all stay put while you descend.
+ * The stick is an altitude control: the top notch is the globe seen from
+ * furthest away, and each notch down flies in a whole tile level, until the map
+ * is at the finest zoom the elevation model supports. The screen never changes,
+ * so the address, the timeline and the theme all stay put while you descend.
  */
 const mapView = createMap(mapEl, {
   onZoom: (value) => {
@@ -171,23 +173,16 @@ const mapView = createMap(mapEl, {
 });
 
 const zoom = createZoomStick(stick, {
+  notches: DETENTS,
   onChange: (value) => applyZoom(value, true),
-  label: (value) => {
-    if (value <= 0.001) return "Globe";
-    const km = Math.round(9.8 * 2 ** (4 - zoomForStick(value)));
-    return km >= 1000 ? "Whole world" : `~${km} km/px`;
-  },
 });
-
-function zoomForStick(value: number): number {
-  return Math.min(4, Math.max(0, ((value - 0.1) / 0.9) * 4));
-}
 
 function applyZoom(value: number, drivePosition: boolean) {
   const step = track ? positionAt(track.steps, ageMa) : null;
   const at = { lat: step?.lat ?? 0, lon: step?.lon ?? 0, ageMa };
   mapView.setValue(value, at);
-  globeEl.style.opacity = String(1 - Math.min(1, Math.max(0, (value - 0.1) / 0.2)));
+  // The globe is exactly what the map is not yet, so the two share one fade.
+  globeEl.style.opacity = String(1 - mapOpacity(value));
   if (drivePosition && step && mapView.isLive) mapView.setMarker(step.lat, step.lon);
 }
 
