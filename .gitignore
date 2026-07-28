@@ -10,3 +10,6 @@ dist/
 # Only the README ships
 *.md
 !README.md
+
+# Review renders, not shipped
+snapshots/
