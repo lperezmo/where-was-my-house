@@ -30,20 +30,20 @@ function sourceFor(age: number) {
 }
 
 /**
- * A phone paints two or three device pixels per PaleoDEM pixel even at native
- * scale. Interpolating that gap smears the shading into mush, so the cells are
- * drawn as the squares they are: coastlines stay crisp, and the grain on screen
- * is the grain of the data.
+ * Left on MapLibre's linear resampling on purpose. Nearest was tried and looked
+ * worse: a phone paints two or three device pixels per tile pixel even at
+ * native scale, and hard edges turn every one of those into a visible square.
+ * The tiles are continuous shaded relief, not a category raster, so smoothing
+ * that last step up is what the content wants.
  *
- * Built once and reused, because changing age re-adds the layer and dropping
- * the paint there would leave the map sharp only until the first seek.
+ * Built once and reused, because changing age re-adds the layer and letting the
+ * two definitions drift would change how the map draws after the first seek.
  */
 function paleoLayer() {
   return {
     id: "paleo",
     type: "raster" as const,
     source: "paleo",
-    paint: { "raster-resampling": "nearest" as const },
   };
 }
 
