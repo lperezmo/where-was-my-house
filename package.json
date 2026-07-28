@@ -10,7 +10,8 @@
     "preview": "bun run --bun vite preview",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "coastlines": "bun run scripts/build-coastlines.ts"
+    "coastlines": "bun run scripts/build-coastlines.ts",
+    "sync-tiles": "bun run scripts/sync-tiles.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
