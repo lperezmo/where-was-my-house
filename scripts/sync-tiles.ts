@@ -9,7 +9,9 @@
  * Credentials come from the environment, never the command line:
  *   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET
  *
- * Run with: bun run sync-tiles [--dry] [--from <dir>]
+ * Run with: bun run sync-tiles [--check] [--dry] [--from <dir>]
+ *   --check  round-trip one small object to prove the credentials work
+ *   --dry    count the tiles without uploading anything
  */
 import { S3Client } from "bun";
 import { readdir, stat } from "node:fs/promises";
@@ -20,6 +22,7 @@ const CONCURRENCY = 24;
 
 const args = process.argv.slice(2);
 const dry = args.includes("--dry");
+const check = args.includes("--check");
 const fromIndex = args.indexOf("--from");
 const source = fromIndex >= 0 ? args[fromIndex + 1] : DEFAULT_SOURCE;
 
@@ -46,7 +49,42 @@ async function* walk(dir: string): AsyncGenerator<string> {
   }
 }
 
+/** Proves the four credentials work before committing to a 37,000 file upload. */
+async function preflight(client: S3Client) {
+  const key = "tiles/.preflight";
+  const stamp = `ok ${new Date().toISOString()}`;
+  await client.write(key, stamp, { type: "text/plain", acl: "public-read" });
+  const back = await client.file(key).text();
+  if (back !== stamp) throw new Error("wrote an object but read back something else");
+  console.log("credentials work: wrote and read tiles/.preflight");
+
+  const base = process.env.R2_PUBLIC_BASE;
+  if (!base) {
+    console.log("R2_PUBLIC_BASE is not set, so the public URL was not checked.");
+    return;
+  }
+  const url = `${base.replace(/\/$/, "")}/${key}`;
+  const res = await fetch(url).catch(() => null);
+  if (res?.ok) console.log(`public read works: ${url}`);
+  else
+    console.log(
+      `NOT public yet (${res?.status ?? "no response"}): ${url}\n` +
+        "Enable the r2.dev public URL or attach a custom domain, then re-run --check.",
+    );
+}
+
 async function main() {
+  if (check) {
+    const client = new S3Client({
+      accessKeyId: requireEnv("R2_ACCESS_KEY_ID"),
+      secretAccessKey: requireEnv("R2_SECRET_ACCESS_KEY"),
+      bucket: requireEnv("R2_BUCKET"),
+      endpoint: `https://${requireEnv("R2_ACCOUNT_ID")}.r2.cloudflarestorage.com`,
+    });
+    await preflight(client);
+    return;
+  }
+
   if (!(await stat(source).catch(() => null))) {
     console.error(`No tiles at ${source}. Pass --from <dir>.`);
     process.exit(1);
