@@ -1,6 +1,6 @@
 #chart {
   padding: 5px;
-  background: var(--sky-2);
+  background: var(--chart-bg);
   border: 1px solid var(--line);
   border-radius: 8px;
   overflow: hidden;
@@ -12,4 +12,58 @@
 .chart-svg {
   display: block;
   width: 100%;
+}
+
+.band-polar {
+  fill: var(--band-polar);
+}
+.band-subpolar {
+  fill: var(--band-subpolar);
+}
+.band-temperate {
+  fill: var(--band-temperate);
+}
+.band-subtropical {
+  fill: var(--band-subtropical);
+}
+.band-tropical {
+  fill: var(--band-tropical);
+}
+
+.band-edge {
+  stroke: var(--chart-bg);
+  stroke-width: 0.6;
+  opacity: 0.55;
+}
+
+.chart-equator {
+  stroke: var(--chart-rule);
+  stroke-width: 0.6;
+  stroke-dasharray: 2 4;
+  opacity: 0.5;
+}
+
+.chart-equator-label {
+  font-size: 7px;
+  letter-spacing: 0.08em;
+  fill: var(--chart-rule);
+}
+
+.chart-curve {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+.chart-cursor {
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.chart-dot {
+  fill: var(--accent);
+  stroke: var(--chart-bg);
+  stroke-width: 1.4;
 }

@@ -44,18 +44,18 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
   const defs = svg("defs");
   defs.innerHTML = `
     <radialGradient id="wwmh-sph" cx="34%" cy="26%" r="80%">
-      <stop offset="0%" stop-color="#1d5075"/>
-      <stop offset="58%" stop-color="#16344d"/>
-      <stop offset="100%" stop-color="#091320"/>
+      <stop offset="0%" class="g-sea-1"/>
+      <stop offset="58%" class="g-sea-2"/>
+      <stop offset="100%" class="g-sea-3"/>
     </radialGradient>
     <radialGradient id="wwmh-halo" cx="50%" cy="50%" r="50%">
-      <stop offset="72%" stop-color="#2a6a94" stop-opacity="0"/>
-      <stop offset="93%" stop-color="#2a6a94" stop-opacity=".30"/>
-      <stop offset="100%" stop-color="#2a6a94" stop-opacity="0"/>
+      <stop offset="72%" class="g-glow" stop-opacity="0"/>
+      <stop offset="93%" class="g-glow" stop-opacity=".30"/>
+      <stop offset="100%" class="g-glow" stop-opacity="0"/>
     </radialGradient>
     <clipPath id="wwmh-clip"><circle cx="${CX}" cy="${CY}" r="${R}"/></clipPath>`;
 
-  const stars = svg("g");
+  const stars = svg("g", { class: "globe-stars" });
   let seed = 20260727;
   const rand = () => {
     seed = (seed * 1664525 + 1013904223) % 4294967296;
@@ -67,7 +67,6 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
         cx: (rand() * 360).toFixed(1),
         cy: (rand() * 300).toFixed(1),
         r: (rand() * 0.9 + 0.25).toFixed(2),
-        fill: "#c8d6e6",
         opacity: (rand() * 0.5 + 0.12).toFixed(2),
       }),
     );
@@ -77,46 +76,16 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
   const sphere = svg("circle", { cx: CX, cy: CY, r: R, fill: "url(#wwmh-sph)" });
 
   const clipped = svg("g", { "clip-path": "url(#wwmh-clip)" });
-  const land = svg("path", {
-    fill: "#3f4c37",
-    stroke: "#5a6b4d",
-    "stroke-width": ".4",
-    "fill-rule": "evenodd",
-  });
-  const graticule = svg("g", { fill: "none", stroke: "#4a7d9e", "stroke-width": ".7" });
-  const trackFull = svg("path", {
-    fill: "none",
-    stroke: "#e0a45e",
-    "stroke-width": "1.2",
-    opacity: ".38",
-    "stroke-dasharray": "3 3",
-  });
-  const trackPast = svg("path", {
-    fill: "none",
-    stroke: "#e0a45e",
-    "stroke-width": "1.6",
-    opacity: ".85",
-  });
-  const todayDot = svg("circle", {
-    r: 0,
-    fill: "none",
-    stroke: "#93a1b5",
-    "stroke-width": "1.2",
-    opacity: ".8",
-  });
-  const pulse = svg("circle", { r: 0, fill: "#e0a45e", class: "globe-pulse" });
-  const nowDot = svg("circle", { r: 0, fill: "#e0a45e", stroke: "#0a0d12", "stroke-width": "1.5" });
+  const land = svg("path", { class: "globe-land", "fill-rule": "evenodd" });
+  const graticule = svg("g", { class: "globe-grat" });
+  const trackFull = svg("path", { r: 0, class: "globe-track-full", "stroke-dasharray": "3 3" });
+  const trackPast = svg("path", { class: "globe-track-past" });
+  const todayDot = svg("circle", { r: 0, class: "globe-today" });
+  const pulse = svg("circle", { r: 0, class: "globe-pulse" });
+  const nowDot = svg("circle", { r: 0, class: "globe-now" });
   clipped.append(land, graticule, trackFull, trackPast, todayDot, pulse, nowDot);
 
-  const rim = svg("circle", {
-    cx: CX,
-    cy: CY,
-    r: R,
-    fill: "none",
-    stroke: "#4d86ab",
-    "stroke-width": ".9",
-    opacity: ".55",
-  });
+  const rim = svg("circle", { cx: CX, cy: CY, r: R, class: "globe-rim" });
 
   root.append(defs, stars, halo, sphere, clipped, rim);
   container.append(root);

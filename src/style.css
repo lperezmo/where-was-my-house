@@ -15,6 +15,31 @@
   --shroud: rgb(10 13 18 / 0.62);
   --sky-1: #0e131b;
   --sky-2: #0a0d12;
+
+  /* Globe */
+  --star: #c8d6e6;
+  --star-show: 1;
+  --sea-1: #1d5075;
+  --sea-2: #16344d;
+  --sea-3: #091320;
+  --land: #3f4c37;
+  --land-edge: #5a6b4d;
+  --grat: #4a7d9e;
+  --rim: #4d86ab;
+  --glow: #2a6a94;
+  --pin-ring: #0a0d12;
+
+  /* Latitude bands, polar through equatorial */
+  --band-polar: rgb(150 196 232 / 0.11);
+  --band-subpolar: rgb(122 168 208 / 0.075);
+  --band-temperate: rgb(147 161 181 / 0.055);
+  --band-subtropical: rgb(224 164 94 / 0.075);
+  --band-tropical: rgb(224 164 94 / 0.135);
+  --chart-bg: var(--sky-2);
+  --chart-rule: #93a1b5;
+
+  --split: 52vh;
+  --split-w: 440px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   color-scheme: dark;
@@ -33,6 +58,27 @@
   --on-accent: #ffffff;
   --edge: #161a20;
   --shroud: rgb(22 26 32 / 0.42);
+  --sky-1: #e9eef2;
+  --sky-2: #dde5ec;
+
+  --star-show: 0;
+  --sea-1: #bcd8e8;
+  --sea-2: #93bcd4;
+  --sea-3: #6e9db8;
+  --land: #b6bf94;
+  --land-edge: #8d9a6b;
+  --grat: #5d87a3;
+  --rim: #6f9bb5;
+  --glow: #7fb0cc;
+  --pin-ring: #ffffff;
+
+  --band-polar: rgb(70 120 170 / 0.13);
+  --band-subpolar: rgb(70 120 170 / 0.09);
+  --band-temperate: rgb(110 120 135 / 0.07);
+  --band-subtropical: rgb(169 105 26 / 0.10);
+  --band-tropical: rgb(169 105 26 / 0.18);
+  --chart-bg: #f1ede6;
+  --chart-rule: #6b7480;
   color-scheme: light;
 }
 
@@ -50,6 +96,27 @@
     --on-accent: #ffffff;
     --edge: #161a20;
     --shroud: rgb(22 26 32 / 0.42);
+    --sky-1: #e9eef2;
+    --sky-2: #dde5ec;
+
+    --star-show: 0;
+    --sea-1: #bcd8e8;
+    --sea-2: #93bcd4;
+    --sea-3: #6e9db8;
+    --land: #b6bf94;
+    --land-edge: #8d9a6b;
+    --grat: #5d87a3;
+    --rim: #6f9bb5;
+    --glow: #7fb0cc;
+    --pin-ring: #ffffff;
+
+    --band-polar: rgb(70 120 170 / 0.13);
+    --band-subpolar: rgb(70 120 170 / 0.09);
+    --band-temperate: rgb(110 120 135 / 0.07);
+    --band-subtropical: rgb(169 105 26 / 0.10);
+    --band-tropical: rgb(169 105 26 / 0.18);
+    --chart-bg: #f1ede6;
+    --chart-rule: #6b7480;
     color-scheme: light;
   }
 }
@@ -136,6 +203,14 @@ input::placeholder {
 
 #app[data-phase="ready"] #stage,
 #app[data-phase="ready"] #panel {
+  display: flex;
+}
+
+#split {
+  display: none;
+}
+
+#app[data-phase="ready"] #split {
   display: flex;
 }
 
@@ -331,9 +406,9 @@ input::placeholder {
 
 #stage {
   position: relative;
-  flex: 1 1 auto;
+  flex: 0 0 var(--split);
   flex-direction: column;
-  min-height: 46vh;
+  min-height: 0;
   background: radial-gradient(120% 80% at 50% 20%, var(--sky-1) 0%, var(--sky-2) 70%);
 }
 
@@ -368,8 +443,7 @@ input::placeholder {
   white-space: nowrap;
 }
 
-#change,
-#theme {
+#change {
   flex: 0 0 auto;
   color: var(--dim);
   background: transparent;
@@ -387,26 +461,49 @@ input::placeholder {
 }
 
 #theme {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  font-size: 10.5px;
-  font-weight: 600;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 3px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 22px;
 }
 
+#theme button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--faint);
+  background: transparent;
+  border: none;
+  border-radius: 18px;
+}
+
+#theme svg {
+  width: 17px;
+  height: 17px;
+}
+
+#theme button:hover {
+  color: var(--text);
+}
+
+#theme button[aria-checked="true"] {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+#theme button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 #change:hover,
 #change:focus-visible {
   color: var(--accent);
-}
-
-#theme:hover,
-#theme:focus-visible {
-  color: var(--text);
-  border-color: var(--accent);
 }
 
 #globe {
@@ -459,13 +556,44 @@ input::placeholder {
 /* Panel ------------------------------------------------------------------- */
 
 #panel {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   flex-direction: column;
-  max-height: 54vh;
+  min-height: 0;
   overflow-y: auto;
   background: var(--bg);
-  border-top: 1px solid var(--line);
   -webkit-overflow-scrolling: touch;
+}
+
+/* Drag handle between the globe and the readout. */
+#split {
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  cursor: row-resize;
+  touch-action: none;
+  outline: none;
+}
+
+#split i {
+  width: 44px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  transition: background 0.15s ease;
+}
+
+#split:hover i,
+#split[data-drag] i {
+  background: var(--accent);
+}
+
+#split:focus-visible i {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 #timeline {
@@ -578,14 +706,27 @@ input::placeholder {
   }
 
   #stage {
+    flex: 1 1 auto;
     min-height: 100%;
   }
 
-  #panel {
-    flex: 0 0 440px;
-    max-width: 100%;
-    max-height: 100%;
-    border-top: 0;
+  #split {
+    width: 10px;
+    height: auto;
+    cursor: col-resize;
+    border: 0;
     border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+
+  #split i {
+    width: 4px;
+    height: 44px;
+  }
+
+  #panel {
+    flex: 0 0 var(--split-w);
+    min-width: 300px;
+    max-width: 100%;
   }
 }
