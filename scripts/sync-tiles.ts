@@ -53,7 +53,7 @@ async function* walk(dir: string): AsyncGenerator<string> {
 async function preflight(client: S3Client) {
   const key = "tiles/.preflight";
   const stamp = `ok ${new Date().toISOString()}`;
-  await client.write(key, stamp, { type: "text/plain", acl: "public-read" });
+  await client.write(key, stamp, { type: "text/plain" });
   const back = await client.file(key).text();
   if (back !== stamp) throw new Error("wrote an object but read back something else");
   console.log("credentials work: wrote and read tiles/.preflight");
@@ -119,11 +119,9 @@ async function main() {
       if (!file) return;
       const key = `tiles/${relative(source, file).replaceAll("\\", "/")}`;
       try {
-        await client!.write(key, Bun.file(file), {
-          type: "image/png",
-          // Tiles for a fixed age never change, so they can be cached forever.
-          acl: "public-read",
-        });
+        // No ACL: R2 has no per-object ACLs, and sending one can be rejected.
+        // Public access is a bucket setting, either the r2.dev URL or a domain.
+        await client!.write(key, Bun.file(file), { type: "image/png" });
         done += 1;
         if (done % 500 === 0) console.log(`${done}/${files.length}`);
       } catch (err) {

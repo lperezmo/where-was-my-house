@@ -323,13 +323,13 @@ test("coastlines snap to the nearest reconstruction age and are cached", async (
   host.remove();
 });
 
-test("the tile base is optional and normalised", async () => {
+test("the tile base is normalised however it is configured", async () => {
   const { TILE_BASE, hasTiles, tileUrl } = await import("../src/config");
-  // Nothing is configured in test, so the map view must stay unavailable
-  // rather than requesting tiles from a URL that cannot answer.
-  expect(hasTiles).toBe(false);
-  expect(TILE_BASE).toBe("");
-  // A trailing slash in the env var must not produce a doubled separator.
+  // Bun loads .env, so whether a bucket is configured depends on the machine.
+  // The invariant that must hold either way is that the two agree.
+  expect(hasTiles).toBe(TILE_BASE.length > 0);
+  // A trailing slash in the env var must never produce a doubled separator.
+  expect(TILE_BASE.endsWith("/")).toBe(false);
+  expect(tileUrl(300, 3, 1, 2)).toBe(`${TILE_BASE}/tiles/300/3/1/2.png`);
   expect(tileUrl(300, 3, 1, 2).includes("//tiles")).toBe(false);
-  expect(tileUrl(300, 3, 1, 2)).toBe("/tiles/300/3/1/2.png");
 });

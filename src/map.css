@@ -1,0 +1,205 @@
+/* The map is a modal, so entering and leaving it is always deliberate and a
+   stray tap on the globe can never strand anyone somewhere with no way back. */
+#mapview {
+  display: flex;
+  flex-direction: column;
+  width: min(94vw, 1040px);
+  height: min(88vh, 760px);
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.5);
+}
+
+#mapview:not([open]) {
+  display: none;
+}
+
+#mapview::backdrop {
+  background: rgb(4 7 11 / 0.62);
+  backdrop-filter: blur(3px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #mapview[open] {
+    animation: map-in 0.22s ease both;
+  }
+}
+
+@keyframes map-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+#map-head {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+#map-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#map-title {
+  margin: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#map-sub {
+  margin: 2px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+#map-close {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+}
+
+#map-close:hover,
+#map-close:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+#map {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--sea-3);
+}
+
+#map-foot {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px calc(var(--safe-bottom) + 10px);
+  border-top: 1px solid var(--line);
+}
+
+#map-home {
+  flex: 0 0 auto;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+#map-home:hover,
+#map-home:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+#map-note {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--faint);
+  text-wrap: pretty;
+}
+
+.map-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.map-status[data-state="failed"] {
+  color: var(--accent);
+}
+
+/* Entry point on the globe */
+#explore {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  z-index: 2;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  transform: translateX(-50%);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.35);
+}
+
+#explore[hidden] {
+  display: none;
+}
+
+#explore:hover,
+#explore:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.globe-pickable {
+  cursor: zoom-in;
+}
+
+@media (max-width: 640px) {
+  #mapview {
+    width: 100vw;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  #map-foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  #map-home {
+    height: 44px;
+  }
+}

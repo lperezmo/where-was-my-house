@@ -2,6 +2,8 @@ import { fetchFossils, fetchGeology, fetchTrack, geocode } from "./api";
 import { createLatitudeChart } from "./chart";
 import { renderFossils } from "./fossils";
 import { createGlobe } from "./globe";
+import { tileAgeFor } from "./config";
+import { createMap, hasTiles } from "./map";
 import { beltFor, describe, periodAt } from "./narrative";
 import { capture, positionAt } from "./position";
 import { renderPrompt } from "./prompt";
@@ -31,7 +33,7 @@ const promptEl = el("prompt");
 const themeGroup = el("theme");
 const themeBtns = [...themeGroup.querySelectorAll<HTMLButtonElement>("button[data-set]")];
 
-const globe = createGlobe(el("globe"));
+const globe = createGlobe(el("globe"), { onPick: (lat, lon) => openMap(lat, lon) });
 const timeline = createTimeline(el("timeline"), { onSeek: seek, onScale: () => chart.redraw() });
 const chart = createLatitudeChart(el("chart"), timeline.scale, seek);
 
@@ -138,6 +140,59 @@ splitEl.addEventListener("keydown", (e) => {
   applySplit(current + delta, wide);
 });
 
+/* Map ---------------------------------------------------------------------- */
+
+const exploreBtn = el<HTMLButtonElement>("explore");
+const mapNote = el("map-note");
+const mapTitle = el("map-title");
+const mapSub = el("map-sub");
+const mapView = createMap(el<HTMLDialogElement>("mapview"), () => {
+  exploreBtn.hidden = !hasTiles;
+});
+
+/**
+ * The paleo map is only offered when a tile bucket is configured, so a fork
+ * without one shows a globe that works rather than a button that cannot.
+ */
+if (hasTiles) exploreBtn.hidden = false;
+
+function openMap(lat?: number, lon?: number) {
+  if (!hasTiles || !track) return;
+  const step = positionAt(track.steps, ageMa);
+  const at = { lat: lat ?? step?.lat, lon: lon ?? step?.lon };
+  if (at.lat == null || at.lon == null) {
+    status("The model has no position for this ground at this age.");
+    return;
+  }
+  exploreBtn.hidden = true;
+  mapView.open({ lat: at.lat, lon: at.lon, ageMa });
+  if (step) mapView.setMarker(step.lat, step.lon);
+  updateMapNote();
+}
+
+function updateMapNote() {
+  if (!mapView.isOpen) return;
+  mapTitle.textContent = placeLabel;
+  mapSub.textContent = `${fmtAge(tileAgeFor(ageMa))} Ma · ${periodAt(ageMa).name}`;
+  mapNote.textContent =
+    "Elevation from the Scotese and Wright PaleoDEM, reconstructed on Merdith et al. 2021. " +
+    "Detail stops near 10 km per pixel, the native resolution of the model, so there is " +
+    "nothing finer to zoom into.";
+}
+
+exploreBtn.addEventListener("click", () => openMap());
+el("map-close").addEventListener("click", () => mapView.close());
+
+/** Returns to the reconstructed position, so exploring can never lose the point. */
+el("map-home").addEventListener("click", () => {
+  const step = track && positionAt(track.steps, ageMa);
+  if (step) mapView.flyTo(step.lat, step.lon);
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && mapView.isOpen) mapView.close();
+});
+
 /* Status ------------------------------------------------------------------ */
 
 let statusTimer: number | undefined;
@@ -194,6 +249,11 @@ function render() {
   globe.setAge(ageMa);
   chart.setAge(ageMa);
   timeline.setAge(ageMa);
+  if (mapView.isOpen) {
+    mapView.setAge(ageMa);
+    if (step) mapView.setMarker(step.lat, step.lon);
+    updateMapNote();
+  }
   scheduleFossils();
 }
 

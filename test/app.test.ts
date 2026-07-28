@@ -182,3 +182,73 @@ test("the chart and globe take every colour from the theme", async () => {
     expect(css.split(`${token}:`).length - 1).toBe(3);
   }
 });
+
+test("the map is offered only when a tile bucket is configured", async () => {
+  const { hasTiles } = await import("../src/config");
+  // Without a bucket the entry point stays hidden rather than opening a map
+  // that would request tiles from nowhere.
+  expect(($("#explore") as HTMLButtonElement).hidden).toBe(!hasTiles);
+  expect($("#mapview").hasAttribute("open")).toBe(false);
+});
+
+test("the map modal opens, buffers calls while loading, and closes", async () => {
+  const { createMap } = await import("../src/map");
+  const dialog = $("#mapview") as HTMLDialogElement;
+
+  let closed = 0;
+  const map = createMap(dialog, () => (closed += 1));
+  expect(map.isOpen).toBe(false);
+
+  map.open({ lat: 45.7, lon: -118.8, ageMa: 300 });
+  expect(map.isOpen).toBe(true);
+  expect(dialog.hasAttribute("open")).toBe(true);
+
+  // Opening twice must not stack dialogs or refire the load.
+  map.open({ lat: 0, lon: 0, ageMa: 0 });
+  expect(map.isOpen).toBe(true);
+
+  // Calls made before the chunk resolves are buffered, not thrown.
+  map.setAge(120);
+  map.setMarker(10, 20);
+  map.flyTo(10, 20);
+
+  map.close();
+  expect(map.isOpen).toBe(false);
+  expect(dialog.hasAttribute("open")).toBe(false);
+  expect(closed).toBe(1);
+
+  // Closing an already closed map is a no-op, not a second callback.
+  map.close();
+  expect(closed).toBe(1);
+});
+
+test("a click on the backdrop closes the map but a click inside does not", async () => {
+  const { createMap } = await import("../src/map");
+  const dialog = $("#mapview") as HTMLDialogElement;
+  const map = createMap(dialog, () => {});
+  map.open({ lat: 0, lon: 0, ageMa: 0 });
+
+  $("#map").dispatchEvent(new win.Event("click", { bubbles: true }));
+  expect(map.isOpen).toBe(true);
+
+  dialog.dispatchEvent(new win.Event("click", { bubbles: true }));
+  expect(map.isOpen).toBe(false);
+});
+
+test("tile ages snap to the 5 Myr grid the pipeline rendered", async () => {
+  const { tileAgeFor, TILE_MAX_AGE, TILE_MAX_ZOOM } = await import("../src/config");
+  expect(tileAgeFor(0)).toBe(0);
+  expect(tileAgeFor(2.4)).toBe(0);
+  expect(tileAgeFor(2.6)).toBe(5);
+  expect(tileAgeFor(66)).toBe(65);
+  expect(tileAgeFor(301.2)).toBe(300);
+  expect(tileAgeFor(537)).toBe(535);
+
+  // Nothing may be requested outside the range that was actually rendered.
+  expect(tileAgeFor(540)).toBe(540);
+  expect(tileAgeFor(600)).toBe(TILE_MAX_AGE);
+  expect(tileAgeFor(-5)).toBe(0);
+
+  // The zoom ceiling is the PaleoDEM's own resolution, not a UI choice.
+  expect(TILE_MAX_ZOOM).toBe(4);
+});
