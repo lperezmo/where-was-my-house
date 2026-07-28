@@ -247,3 +247,78 @@ test("longitude interpolates the short way across the antimeridian", async () =>
   // Halfway is 180, not the 0 a naive average would give.
   expect(Math.abs(mid!.lon)).toBeCloseTo(180, 6);
 });
+
+test("coastlines are drawn and stay inside the sphere", async () => {
+  const { createGlobe } = await import("../src/globe");
+  const { readFileSync } = await import("node:fs");
+  const rings = JSON.parse(
+    readFileSync(`${root}/public/coastlines/0.json`, "utf8"),
+  ) as [number, number][][];
+
+  const calls: string[] = [];
+  (globalThis as Record<string, unknown>).fetch = async (url: string) => {
+    calls.push(String(url));
+    return { ok: true, json: async () => rings };
+  };
+
+  const host = document.createElement("div");
+  document.body.append(host);
+  const globe = createGlobe(host);
+  globe.setTrack(fakeTrack() as never);
+  globe.setAge(0);
+  await new Promise((r) => setTimeout(r, 50));
+
+  expect(calls.some((u) => u.includes("/coastlines/0.json"))).toBe(true);
+
+  const land = host.querySelector('path[fill-rule="evenodd"]') as SVGPathElement;
+  const d = land.getAttribute("d") ?? "";
+  expect(d.length).toBeGreaterThan(1000);
+  expect(d.startsWith("M")).toBe(true);
+
+  // Every plotted vertex must fall on the visible disc, including limb points
+  // pushed out to the rim. Anything outside means the horizon maths is wrong.
+  const coords = d.match(/-?\d+\.\d+ -?\d+\.\d+/g) ?? [];
+  expect(coords.length).toBeGreaterThan(500);
+  let maxRadius = 0;
+  for (const pair of coords) {
+    const [x, y] = pair.split(" ").map(Number);
+    maxRadius = Math.max(maxRadius, Math.hypot(x - 180, y - 168));
+  }
+  expect(maxRadius).toBeLessThanOrEqual(150.5);
+
+  globe.destroy();
+  host.remove();
+});
+
+test("coastlines snap to the nearest reconstruction age and are cached", async () => {
+  const { createGlobe } = await import("../src/globe");
+  const asked: number[] = [];
+  (globalThis as Record<string, unknown>).fetch = async (url: string) => {
+    asked.push(Number(String(url).match(/(\d+)\.json/)![1]));
+    return { ok: true, json: async () => [] };
+  };
+
+  const host = document.createElement("div");
+  document.body.append(host);
+  const globe = createGlobe(host);
+
+  globe.setAge(0);
+  globe.setAge(97);
+  globe.setAge(103);
+  globe.setAge(455);
+  await new Promise((r) => setTimeout(r, 50));
+
+  // 97 and 103 both snap to 100, which is fetched once.
+  expect(asked).toContain(100);
+  expect(asked).toContain(450);
+  expect(asked.filter((a) => a === 100).length).toBe(1);
+
+  const before = asked.length;
+  globe.setAge(0);
+  globe.setAge(98);
+  await new Promise((r) => setTimeout(r, 50));
+  expect(asked.length).toBe(before);
+
+  globe.destroy();
+  host.remove();
+});

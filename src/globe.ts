@@ -1,6 +1,10 @@
+import { AGES } from "../api/_lib/ages";
 import { deltaLon, positionAt } from "./position";
 import type { Track } from "./types";
 import "./globe.css";
+
+/** Closed lon/lat rings, precomputed per age by scripts/build-coastlines.ts. */
+type Ring = [number, number][];
 
 export interface GlobeHandle {
   setTrack(track: Track | null): void;
@@ -73,6 +77,12 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
   const sphere = svg("circle", { cx: CX, cy: CY, r: R, fill: "url(#wwmh-sph)" });
 
   const clipped = svg("g", { "clip-path": "url(#wwmh-clip)" });
+  const land = svg("path", {
+    fill: "#3f4c37",
+    stroke: "#5a6b4d",
+    "stroke-width": ".4",
+    "fill-rule": "evenodd",
+  });
   const graticule = svg("g", { fill: "none", stroke: "#4a7d9e", "stroke-width": ".7" });
   const trackFull = svg("path", {
     fill: "none",
@@ -96,7 +106,7 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
   });
   const pulse = svg("circle", { r: 0, fill: "#e0a45e", class: "globe-pulse" });
   const nowDot = svg("circle", { r: 0, fill: "#e0a45e", stroke: "#0a0d12", "stroke-width": "1.5" });
-  clipped.append(graticule, trackFull, trackPast, todayDot, pulse, nowDot);
+  clipped.append(land, graticule, trackFull, trackPast, todayDot, pulse, nowDot);
 
   const rim = svg("circle", {
     cx: CX,
@@ -116,6 +126,11 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
   let age = 0;
   let raf = 0;
   let dead = false;
+
+  const coastCache = new Map<number, Ring[]>();
+  let coastRings: Ring[] = [];
+  let coastAge: number | null = null;
+  let coastToken = 0;
 
   function project(lat: number, lon: number): Projected {
     const ph = lat * D2R;
@@ -145,6 +160,35 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
     return d;
   }
 
+  /**
+   * A landmass on the limb is part in front of the horizon and part behind it.
+   * Dropping the hidden vertices tears the outline open, so they are pushed out
+   * to the rim instead and the ring closes along it. Rings entirely on the far
+   * side are skipped, or they would collapse into slivers on the edge.
+   */
+  function landPath(rings: Ring[]): string {
+    const out: string[] = [];
+    for (const ring of rings) {
+      let anyFront = false;
+      const pts: string[] = [];
+      for (const [lon, lat] of ring) {
+        const q = project(lat, lon);
+        if (q.front) {
+          anyFront = true;
+          pts.push(`${q.x.toFixed(1)} ${q.y.toFixed(1)}`);
+        } else {
+          const dx = q.x - CX;
+          const dy = q.y - CY;
+          const len = Math.hypot(dx, dy) || 1;
+          pts.push(`${(CX + (dx / len) * R).toFixed(1)} ${(CY + (dy / len) * R).toFixed(1)}`);
+        }
+      }
+      if (!anyFront || pts.length < 3) continue;
+      out.push(`M${pts.join("L")}Z`);
+    }
+    return out.join("");
+  }
+
   function drawGraticule() {
     const parts: string[] = [];
     for (let lon = -180; lon < 180; lon += 30) {
@@ -160,7 +204,40 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
     graticule.innerHTML = parts.join("");
   }
 
+  /** Coastlines exist for the fixed reconstruction grid, so a scrub snaps to the nearest. */
+  function nearestCoastAge(a: number): number {
+    let best = AGES[0];
+    for (const candidate of AGES) {
+      if (Math.abs(candidate - a) < Math.abs(best - a)) best = candidate;
+    }
+    return best;
+  }
+
+  function loadCoast(a: number) {
+    const want = nearestCoastAge(a);
+    if (want === coastAge) return;
+    const cached = coastCache.get(want);
+    if (cached) {
+      coastAge = want;
+      coastRings = cached;
+      draw();
+      return;
+    }
+    const token = ++coastToken;
+    void fetch(`/coastlines/${want}.json`)
+      .then((r) => (r.ok ? (r.json() as Promise<Ring[]>) : Promise.reject(new Error("missing"))))
+      .then((rings) => {
+        coastCache.set(want, rings);
+        if (token !== coastToken || dead) return;
+        coastAge = want;
+        coastRings = rings;
+        draw();
+      })
+      .catch(() => {});
+  }
+
   function draw() {
+    land.setAttribute("d", coastRings.length ? landPath(coastRings) : "");
     drawGraticule();
     if (!track || !track.steps.length) {
       trackFull.setAttribute("d", "");
@@ -216,6 +293,7 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
   }
 
   draw();
+  loadCoast(0);
   raf = requestAnimationFrame(tick);
 
   return {
@@ -232,6 +310,7 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
     setAge(next) {
       if (dead) return;
       age = next;
+      loadCoast(next);
       draw();
     },
     destroy() {

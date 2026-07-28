@@ -20,8 +20,8 @@ So the ideas here are not new. What is different is resolution and continuity:
 
 - **109 reconstructions at 5 to 10 Myr spacing**, against Ancient Earth's 26
   steps at 15 to 150 Myr intervals. This scrubs; that one jumps between slices.
-- **A continuous drift track** drawn across the globe, rather than a series of
-  disconnected positions.
+- **A continuous drift track** drawn across the globe, over reconstructed
+  coastlines for that same age, rather than a series of disconnected positions.
 - **Paleolatitude charted over the full 540 Ma**, against Paleolatitude.org's
   320 Ma, and plotted as a curve rather than returned as a number.
 - **Fossils as actual Paleobiology Database occurrences**, filtered to the age
@@ -48,7 +48,7 @@ hand-rolled SVG. Initial payload is about 14 kB gzipped.
 
 | Service | Used for | Key needed |
 |---|---|---|
-| [GPlates Web Service](https://gws.gplates.org) | point reconstruction, Merdith et al. 2021 model | no |
+| [GPlates Web Service](https://gws.gplates.org) | point reconstruction and coastlines, Merdith et al. 2021 model | no |
 | [Paleobiology Database](https://paleobiodb.org) | fossil occurrences | no |
 | [Macrostrat](https://macrostrat.org) | local rock units, lithology, depositional environment | no |
 | [Nominatim](https://nominatim.openstreetmap.org) | geocoding | no |
@@ -59,7 +59,13 @@ hand-rolled SVG. Initial payload is about 14 kB gzipped.
 bun install
 bun run dev          # http://localhost:5173, /api included
 bun test             # headless DOM, recorded API fixtures
+bun run coastlines   # regenerate public/coastlines, only needed if the model changes
 ```
+
+Coastlines are precomputed rather than fetched live. GPlates returns about
+2.2 MB in 4.5 s per age; simplified at 0.5 degrees, which is under a pixel at
+the size the globe is drawn, each age is about 25 kB gzipped and comes off the
+CDN.
 
 `bun run build` typechecks and builds to `dist/`.
 
