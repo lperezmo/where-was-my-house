@@ -4,6 +4,8 @@ Enter an address, get a 540-million-year biography of that patch of ground: the
 path it took across the globe, the latitudes it sat at, the climate belts it
 passed through, and the fossils actually found in the rock there.
 
+**[wherewasmyhouse.vercel.app](https://wherewasmyhouse.vercel.app)**
+
 Built mobile-first. No API keys.
 
 ## Prior art
