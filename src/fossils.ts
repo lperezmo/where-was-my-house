@@ -1,5 +1,5 @@
 import type { Fossil, FossilResult } from "./types";
-import "./narrative.css";
+import "./fossils.css";
 
 const ITALIC_RANKS = new Set(["genus", "subgenus", "species", "subspecies"]);
 

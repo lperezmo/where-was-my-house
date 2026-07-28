@@ -8,13 +8,12 @@
     "dev": "bun run --bun vite",
     "build": "tsc --noEmit && bun run --bun vite build",
     "preview": "bun run --bun vite preview",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "maplibre-gl": "^5.1.0"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "happy-dom": "^20.11.1",
     "typescript": "^5.7.2",
     "vite": "^6.0.5"
   }
