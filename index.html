@@ -1,57 +1,118 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="auto">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="dark" />
     <title>Where Was My House</title>
     <meta
       name="description"
       content="Enter an address and follow that patch of ground across 540 million years of plate motion, with paleolatitude, climate, and the fossils found in the rock."
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <div id="app">
-      <header id="topbar">
-        <h1>Where Was My House</h1>
-        <form id="search" autocomplete="off">
-          <input
-            id="q"
-            type="search"
-            placeholder="Enter an address or place"
-            aria-label="Address or place"
-            enterkeyhint="search"
-          />
-          <button id="locate" type="button" title="Use my location" aria-label="Use my location">
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.94 3A9 9 0 0013 3.06V1h-2v2.06A9 9 0 003.06 11H1v2h2.06A9 9 0 0011 20.94V23h2v-2.06A9 9 0 0020.94 13H23v-2zM12 19a7 7 0 110-14 7 7 0 010 14z"
+    <div id="app" data-phase="intro">
+      <section id="intro">
+        <div id="intro-orb" aria-hidden="true"></div>
+        <div id="intro-body">
+          <p id="intro-eyebrow">540 Ma to present</p>
+          <h1>Where was my house</h1>
+          <p id="intro-lede">
+            Enter an address. This follows that patch of ground backwards through
+            540 million years of plate motion.
+          </p>
+          <form id="search" autocomplete="off">
+            <div id="search-row">
+              <input
+                id="q"
+                type="search"
+                placeholder="Street address or place"
+                aria-label="Address or place"
+                enterkeyhint="search"
               />
-            </svg>
-          </button>
-        </form>
-        <ul id="suggestions" hidden></ul>
-      </header>
+              <button id="locate" type="button" title="Use my location" aria-label="Use my location">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.6" />
+                  <circle cx="10" cy="10" r="1.4" fill="currentColor" />
+                  <path
+                    d="M10 1v3M10 16v3M1 10h3M16 10h3"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <button id="submit" type="submit">Follow this ground back</button>
+          </form>
+          <ul id="suggestions" hidden></ul>
+          <p id="intro-status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
 
-      <main id="stage">
+      <section id="loading">
+        <div id="loading-body">
+          <p id="loading-place"></p>
+          <p id="loading-title">Reconstructing plate positions</p>
+          <div id="loading-ticks" aria-hidden="true"></div>
+          <p id="loading-note">65 positions, 540 Ma to present, in one pass</p>
+        </div>
+      </section>
+
+      <section id="stage">
+        <div id="stage-head">
+          <div id="place-pill">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.8" />
+              <circle cx="10" cy="10" r="1.3" fill="currentColor" />
+            </svg>
+            <span id="place-name"></span>
+            <button id="change" type="button">Change</button>
+          </div>
+          <button id="theme" type="button" title="Toggle light and dark">Light</button>
+        </div>
         <div id="globe"></div>
+        <div id="legend">
+          <span id="legend-now">0 Ma</span>
+          <span id="legend-today">today</span>
+        </div>
         <div id="status" role="status" aria-live="polite"></div>
-      </main>
+      </section>
 
       <section id="panel">
-        <div id="scrubber"></div>
-        <div id="readout">
-          <div id="age-label"></div>
+        <div id="timeline"></div>
+
+        <div class="block" id="readout">
+          <div id="age-row">
+            <span id="age-big">0</span>
+            <span id="age-unit">Ma</span>
+            <span id="period-chip"><i></i><span id="period-name"></span></span>
+          </div>
+          <p id="lat-line"></p>
           <p id="narrative">Enter an address to begin.</p>
         </div>
-        <div id="chart"></div>
-        <div id="fossils"></div>
-        <div id="prompt"></div>
+
+        <div class="block">
+          <div class="block-head">
+            <span class="block-title">Paleolatitude</span>
+            <span class="block-meta" id="climate"></span>
+          </div>
+          <div id="chart"></div>
+        </div>
+
+        <div class="block" id="fossils"></div>
+        <div class="block" id="prompt"></div>
+
         <footer id="credits">
           <p>
             Reconstruction: GPlates Web Service, Merdith et al. 2021 rotation model.
-            Fossils: Paleobiology Database. Geocoding: Nominatim / OpenStreetMap.
+            Fossils: Paleobiology Database. Rock record: Macrostrat (CC BY 4.0).
+            Geocoding: Nominatim / OpenStreetMap.
           </p>
           <p>
             Plate models are interpretations, not observations. Positions before the

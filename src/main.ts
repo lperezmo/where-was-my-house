@@ -1,26 +1,38 @@
 import { fetchFossils, fetchGeology, fetchTrack, geocode } from "./api";
-import { renderPrompt } from "./prompt";
-import { createLatitudeChart, createScrubber } from "./chart";
-import { createGlobe } from "./globe";
+import { createLatitudeChart } from "./chart";
 import { renderFossils } from "./fossils";
-import { describe, periodAt } from "./narrative";
-import type { GeoResult, Track, TrackStep } from "./types";
+import { createGlobe } from "./globe";
+import { beltFor, describe, periodAt } from "./narrative";
+import { positionAt } from "./position";
+import { renderPrompt } from "./prompt";
+import { createTimeline } from "./timeline";
+import type { GeoResult, Track } from "./types";
 import "./style.css";
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
+const app = el("app");
 const form = el<HTMLFormElement>("search");
 const input = el<HTMLInputElement>("q");
 const suggestions = el<HTMLUListElement>("suggestions");
-const statusEl = el<HTMLDivElement>("status");
-const ageLabel = el<HTMLDivElement>("age-label");
-const narrativeEl = el<HTMLParagraphElement>("narrative");
-const fossilsEl = el<HTMLDivElement>("fossils");
-const promptEl = el<HTMLDivElement>("prompt");
+const introStatus = el("intro-status");
+const statusEl = el("status");
+const loadingPlace = el("loading-place");
+const placeName = el("place-name");
+const ageBig = el("age-big");
+const periodName = el("period-name");
+const periodDot = el<HTMLElement>("period-chip").querySelector("i") as HTMLElement;
+const latLine = el("lat-line");
+const climateEl = el("climate");
+const narrativeEl = el("narrative");
+const legendNow = el("legend-now");
+const fossilsEl = el("fossils");
+const promptEl = el("prompt");
+const themeBtn = el<HTMLButtonElement>("theme");
 
 const globe = createGlobe(el("globe"));
-const chart = createLatitudeChart(el("chart"), seek);
-const scrubber = createScrubber(el("scrubber"), seek);
+const timeline = createTimeline(el("timeline"), { onSeek: seek, onScale: () => chart.redraw() });
+const chart = createLatitudeChart(el("chart"), timeline.scale, seek);
 
 let track: Track | null = null;
 let ageMa = 0;
@@ -29,25 +41,56 @@ let trackAbort: AbortController | null = null;
 let fossilAbort: AbortController | null = null;
 let fossilTimer: number | undefined;
 
+/* Theme ------------------------------------------------------------------- */
+
+let theme = localStorage.getItem("wwmh-theme") ?? "auto";
+
+/** The button offers the theme you would switch to, not the one you are in. */
+function isDark(): boolean {
+  if (theme !== "auto") return theme === "dark";
+  return !window.matchMedia("(prefers-color-scheme: light)").matches;
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme = theme;
+  const next = isDark() ? "Light" : "Dark";
+  themeBtn.textContent = next;
+  themeBtn.setAttribute("aria-label", `Switch to ${next.toLowerCase()} theme`);
+}
+
+applyTheme();
+
+themeBtn.addEventListener("click", () => {
+  theme = isDark() ? "light" : "dark";
+  localStorage.setItem("wwmh-theme", theme);
+  applyTheme();
+});
+
+/* Status ------------------------------------------------------------------ */
+
 let statusTimer: number | undefined;
 function status(msg: string, sticky = false) {
-  statusEl.textContent = msg;
-  statusEl.dataset.show = msg ? "1" : "0";
+  const target = app.dataset.phase === "ready" ? statusEl : introStatus;
+  for (const node of [statusEl, introStatus]) {
+    if (node !== target) {
+      node.textContent = "";
+      node.dataset.show = "0";
+    }
+  }
+  target.textContent = msg;
+  target.dataset.show = msg ? "1" : "0";
   window.clearTimeout(statusTimer);
   if (msg && !sticky) statusTimer = window.setTimeout(() => status(""), 2600);
 }
 
-function stepAt(t: Track, age: number): TrackStep | null {
-  let best: TrackStep | null = null;
-  let bestDelta = Infinity;
-  for (const s of t.steps) {
-    const d = Math.abs(s.ageMa - age);
-    if (d < bestDelta) {
-      bestDelta = d;
-      best = s;
-    }
-  }
-  return best;
+function phase(next: "intro" | "loading" | "ready") {
+  app.dataset.phase = next;
+}
+
+/* Render ------------------------------------------------------------------ */
+
+function fmtAge(a: number): string {
+  return a >= 100 ? a.toFixed(0) : a >= 10 ? a.toFixed(1) : a.toFixed(2);
 }
 
 function seek(next: number) {
@@ -58,19 +101,27 @@ function seek(next: number) {
 function render() {
   if (!track) return;
   const period = periodAt(ageMa);
-  const step = stepAt(track, ageMa);
+  const step = positionAt(track.steps, ageMa);
 
-  ageLabel.innerHTML = ageMa === 0
-    ? `Today <span>${period.name}</span>`
-    : `${ageMa} Ma <span>${period.name}</span>`;
+  ageBig.textContent = fmtAge(ageMa);
+  periodName.textContent = period.name;
+  periodDot.style.background = period.color;
+  legendNow.textContent = `${fmtAge(ageMa)} Ma`;
 
-  narrativeEl.textContent = step
-    ? describe(step, period.name)
-    : "The model has no position for this ground at this age.";
+  if (step) {
+    const belt = beltFor(step.lat);
+    latLine.textContent = `${Math.abs(step.lat).toFixed(1)}° ${step.lat >= 0 ? "N" : "S"} · ${belt}`;
+    climateEl.textContent = belt;
+    narrativeEl.textContent = describe(step, period.name);
+  } else {
+    latLine.textContent = "";
+    climateEl.textContent = "";
+    narrativeEl.textContent = "The model has no position for this ground at this age.";
+  }
 
   globe.setAge(ageMa);
   chart.setAge(ageMa);
-  scrubber.setAge(ageMa);
+  timeline.setAge(ageMa);
   scheduleFossils();
 }
 
@@ -99,7 +150,7 @@ async function loadFossils() {
   if (fossils) renderFossils(fossilsEl, fossils, at);
   else fossilsEl.textContent = "";
 
-  const step = stepAt(track, at);
+  const step = positionAt(track.steps, at);
   renderPrompt(
     promptEl,
     step
@@ -114,24 +165,30 @@ async function loadFossils() {
   );
 }
 
+/* Search ------------------------------------------------------------------ */
+
 async function show(place: GeoResult) {
   input.value = place.name;
   placeLabel = place.name;
+  placeName.textContent = place.name;
+  loadingPlace.textContent = place.name;
   suggestions.hidden = true;
   trackAbort?.abort();
   trackAbort = new AbortController();
-  status("Reconstructing 540 million years...", true);
+  phase("loading");
+  status("");
   try {
     track = await fetchTrack(place.lat, place.lon, trackAbort.signal);
     globe.setTrack(track);
     chart.setTrack(track);
-    scrubber.setTrack(track);
+    timeline.setTrack(track);
     ageMa = 0;
+    phase("ready");
     render();
-    status("");
     history.replaceState(null, "", `?lat=${place.lat.toFixed(4)}&lon=${place.lon.toFixed(4)}`);
   } catch (err) {
     if ((err as Error).name === "AbortError") return;
+    phase("intro");
     status((err as Error).message || "Reconstruction failed", true);
   }
 }
@@ -174,9 +231,25 @@ el("locate").addEventListener("click", () => {
   );
 });
 
+el("change").addEventListener("click", () => {
+  trackAbort?.abort();
+  phase("intro");
+  input.focus();
+});
+
 document.addEventListener("click", (e) => {
   if (!suggestions.contains(e.target as Node) && e.target !== input) suggestions.hidden = true;
 });
+
+/* Boot -------------------------------------------------------------------- */
+
+const ticks = el("loading-ticks");
+for (let i = 0; i < 65; i++) {
+  const bar = document.createElement("i");
+  bar.style.height = `${8 + ((i * 37) % 26)}px`;
+  bar.style.animationDelay = `${(i * 17) % 1100}ms`;
+  ticks.append(bar);
+}
 
 const params = new URLSearchParams(location.search);
 const lat = Number(params.get("lat"));

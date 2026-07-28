@@ -30,15 +30,27 @@ So the ideas here are not new. What is different is resolution and continuity:
 
 That is a difference of degree, not of kind. Worth being honest about.
 
+## What it will not do
+
+The rotation model cannot place ground on a plate that does not exist yet.
+Pendleton, Oregon resolves back to 410 Ma and no further. Past that the app says
+it has no position, and the timeline hatches the span, rather than repeating the
+last known point under an older label.
+
+Macrostrat's rock record is largely North America. Outside it, "no coverage" and
+"no rock of this age preserved here" are kept as separate answers.
+
 ## Stack
 
-Vite, TypeScript, MapLibre GL. Vercel serverless functions. No UI framework, no
-chart library, hand-rolled SVG.
+Vite, TypeScript. Vercel functions on the Bun runtime. No UI framework, no chart
+library, no map library: the globe, the timeline and the latitude chart are all
+hand-rolled SVG. Initial payload is about 14 kB gzipped.
 
 | Service | Used for | Key needed |
 |---|---|---|
 | [GPlates Web Service](https://gws.gplates.org) | point reconstruction, Merdith et al. 2021 model | no |
 | [Paleobiology Database](https://paleobiodb.org) | fossil occurrences | no |
+| [Macrostrat](https://macrostrat.org) | local rock units, lithology, depositional environment | no |
 | [Nominatim](https://nominatim.openstreetmap.org) | geocoding | no |
 
 ## Develop
@@ -46,6 +58,7 @@ chart library, hand-rolled SVG.
 ```bash
 bun install
 bun run dev          # http://localhost:5173, /api included
+bun test             # headless DOM, recorded API fixtures
 ```
 
 `bun run build` typechecks and builds to `dist/`.
@@ -61,10 +74,12 @@ Plate reconstructions are model output, not observation. The Merdith 2021 model
 is peer reviewed and openly licensed, but positions before the Devonian are
 genuinely contested in the literature and the app says so where it matters.
 Fossil records are rendered exactly as PBDB returns them and are never
-synthesized.
+synthesized. Positions are interpolated between reconstructions but never
+extrapolated beyond them.
 
 ## Credits
 
 Merdith et al. (2021) rotation model via the GPlates Web Service, EarthByte
-Group. Fossil occurrence data from the Paleobiology Database. Geocoding from
-Nominatim and OpenStreetMap contributors.
+Group. Fossil occurrence data from the Paleobiology Database. Rock unit data
+from Macrostrat, CC BY 4.0. Geocoding from Nominatim and OpenStreetMap
+contributors.
