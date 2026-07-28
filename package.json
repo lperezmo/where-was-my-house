@@ -1,6 +1,7 @@
 {
   "name": "where-was-my-house",
   "private": true,
+  "description": "Enter an address, get a 540-million-year biography of that ground",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
