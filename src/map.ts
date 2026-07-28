@@ -5,21 +5,62 @@ import "./map.css";
 export { hasTiles, TILE_MAX_ZOOM };
 
 /**
- * Below this the globe is all you see; above it the map has fully taken over.
- * The band between is the crossfade, so leaving the globe is a flight rather
- * than a cut.
+ * One notch for the globe, then one for every tile level the pyramid actually
+ * holds. Notching it rather than leaving it free is the point: between two tile
+ * levels there is no further detail to uncover, only larger pixels, so a smooth
+ * slider would spend most of its travel promising a sharpness the PaleoDEM
+ * never had. Every push down lands somewhere the imagery genuinely changes.
  */
-export const FADE_START = 0.1;
-export const FADE_END = 0.3;
+export interface Detent {
+  /** Stick position, 0 at the globe and 1 at the deepest tile level. */
+  value: number;
+  /** The map zoom this notch commands. Held at 0 for the globe notch. */
+  z: number;
+  name: string;
+  /** Ground resolution at the equator. Empty at the globe, which has no scale. */
+  detail: string;
+}
 
-/** Stick position to map zoom, so the whole lower travel is real map detail. */
+/** A z0 tile is 256 px across a 40 075 km equator, so one pixel is this wide. */
+const KM_PER_PIXEL_Z0 = 156.5;
+
+/** Named by the scale each level can actually resolve, coarsest first. */
+const NAMES = ["Globe", "World", "Continent", "Region", "Basin", "Terrain"];
+
+const NOTCHES = TILE_MAX_ZOOM + 2;
+
+export const DETENTS: Detent[] = Array.from({ length: NOTCHES }, (_, i) => {
+  const z = Math.max(0, i - 1);
+  const km = KM_PER_PIXEL_Z0 / 2 ** z;
+  return {
+    value: i / (NOTCHES - 1),
+    z,
+    name: NAMES[i] ?? `Zoom ${z}`,
+    detail: i === 0 ? "" : `${km >= 10 ? Math.round(km) : km.toFixed(1)} km/px`,
+  };
+});
+
+/** The stick position of a notch, clamped so callers can ask for a rough depth. */
+export function valueForStep(index: number): number {
+  return DETENTS[Math.min(DETENTS.length - 1, Math.max(0, index))].value;
+}
+
+/**
+ * Below this the globe is all you see; above it the map has fully taken over.
+ * The whole crossfade is packed into the gap above the first map notch, so no
+ * notch is ever a half-dissolved mix of the two: by the time the thumb clicks
+ * into World, the map owns the screen outright.
+ */
+export const FADE_START = 0.02;
+export const FADE_END = DETENTS[1].value * 0.8;
+
+/** Stick position to map zoom. The first notch below the globe is z0. */
 export function zoomForValue(value: number): number {
-  const t = Math.min(1, Math.max(0, (value - FADE_START) / (1 - FADE_START)));
-  return t * TILE_MAX_ZOOM;
+  return Math.min(TILE_MAX_ZOOM, Math.max(0, value * (NOTCHES - 1) - 1));
 }
 
 export function valueForZoom(z: number): number {
-  return FADE_START + (Math.min(TILE_MAX_ZOOM, Math.max(0, z)) / TILE_MAX_ZOOM) * (1 - FADE_START);
+  return (Math.min(TILE_MAX_ZOOM, Math.max(0, z)) + 1) / (NOTCHES - 1);
 }
 
 /** 0 while only the globe shows, 1 once the map has fully replaced it. */

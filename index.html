@@ -106,14 +106,24 @@
         <div id="map" aria-hidden="true"></div>
 
         <div id="zoomstick" hidden>
-          <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
-          <div id="zoom-track" role="slider" tabindex="0" aria-label="Zoom"
-            aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Globe">
+          <button id="zoom-out" type="button" title="Climb" aria-label="Climb, back towards the globe">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 12l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div id="zoom-track" role="slider" tabindex="0" aria-label="Altitude"
+            aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="Globe">
+            <div id="zoom-gate" aria-hidden="true"></div>
             <div id="zoom-fill"></div>
             <div id="zoom-thumb"></div>
           </div>
-          <button id="zoom-out" type="button" aria-label="Zoom out to the globe">&minus;</button>
-          <p id="zoom-label">Globe</p>
+          <button id="zoom-in" type="button" title="Descend" aria-label="Descend, closer to the ground">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
         </div>
         <div id="legend">
           <span id="legend-now">0 Ma</span>

@@ -1,4 +1,4 @@
-import { Map as MlMap, Marker, NavigationControl } from "maplibre-gl";
+import { Map as MlMap, Marker } from "maplibre-gl";
 import { TILE_BASE, TILE_MAX_ZOOM, tileAgeFor } from "./config";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -57,7 +57,9 @@ export function mountMap(
     },
   });
 
-  map.addControl(new NavigationControl({ showCompass: false }), "top-right");
+  // No NavigationControl: the altitude lever is the zoom control, and a second
+  // pair of buttons that knows nothing about the globe notch above z0 is
+  // exactly the ambiguity the lever exists to remove.
   map.touchZoomRotate.disableRotation();
 
   const marker = new Marker({ color: "#e0a45e" })
