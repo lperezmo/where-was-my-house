@@ -183,57 +183,8 @@ test("the chart and globe take every colour from the theme", async () => {
   }
 });
 
-test("the map is offered only when a tile bucket is configured", async () => {
-  const { hasTiles } = await import("../src/config");
-  // Without a bucket the entry point stays hidden rather than opening a map
-  // that would request tiles from nowhere.
-  expect(($("#explore") as HTMLButtonElement).hidden).toBe(!hasTiles);
-  expect($("#mapview").hasAttribute("open")).toBe(false);
-});
 
-test("the map modal opens, buffers calls while loading, and closes", async () => {
-  const { createMap } = await import("../src/map");
-  const dialog = $("#mapview") as HTMLDialogElement;
 
-  let closed = 0;
-  const map = createMap(dialog, () => (closed += 1));
-  expect(map.isOpen).toBe(false);
-
-  map.open({ lat: 45.7, lon: -118.8, ageMa: 300 });
-  expect(map.isOpen).toBe(true);
-  expect(dialog.hasAttribute("open")).toBe(true);
-
-  // Opening twice must not stack dialogs or refire the load.
-  map.open({ lat: 0, lon: 0, ageMa: 0 });
-  expect(map.isOpen).toBe(true);
-
-  // Calls made before the chunk resolves are buffered, not thrown.
-  map.setAge(120);
-  map.setMarker(10, 20);
-  map.flyTo(10, 20);
-
-  map.close();
-  expect(map.isOpen).toBe(false);
-  expect(dialog.hasAttribute("open")).toBe(false);
-  expect(closed).toBe(1);
-
-  // Closing an already closed map is a no-op, not a second callback.
-  map.close();
-  expect(closed).toBe(1);
-});
-
-test("a click on the backdrop closes the map but a click inside does not", async () => {
-  const { createMap } = await import("../src/map");
-  const dialog = $("#mapview") as HTMLDialogElement;
-  const map = createMap(dialog, () => {});
-  map.open({ lat: 0, lon: 0, ageMa: 0 });
-
-  $("#map").dispatchEvent(new win.Event("click", { bubbles: true }));
-  expect(map.isOpen).toBe(true);
-
-  dialog.dispatchEvent(new win.Event("click", { bubbles: true }));
-  expect(map.isOpen).toBe(false);
-});
 
 test("tile ages snap to the 5 Myr grid the pipeline rendered", async () => {
   const { tileAgeFor, TILE_MAX_AGE, TILE_MAX_ZOOM } = await import("../src/config");
@@ -251,4 +202,63 @@ test("tile ages snap to the 5 Myr grid the pipeline rendered", async () => {
 
   // The zoom ceiling is the PaleoDEM's own resolution, not a UI choice.
   expect(TILE_MAX_ZOOM).toBe(4);
+});
+
+test("the zoom stick flies from globe to map without leaving the screen", async () => {
+  const { hasTiles } = await import("../src/config");
+  const stick = $("#zoomstick");
+  expect(stick.hidden).toBe(!hasTiles);
+  if (!hasTiles) return;
+
+  const track = $("#zoom-track");
+  const thumb = $("#zoom-thumb");
+  const globe = $("#globe");
+  const map = $("#map");
+
+  // At the top it is the globe alone, and the map must not eat gestures.
+  expect(track.getAttribute("aria-valuetext")).toBe("Globe");
+  expect(map.getAttribute("aria-hidden")).toBe("true");
+  expect(map.style.pointerEvents).toBe("none");
+
+  // happy-dom reports a zero-sized box, so the track is given a real one.
+  track.getBoundingClientRect = (() => ({ top: 0, height: 150, left: 0, width: 34 })) as never;
+
+  const drag = (fraction: number) => {
+    const e = new win.Event("pointermove", { bubbles: true });
+    Object.defineProperty(e, "clientY", { value: fraction * 150, configurable: true });
+    track.dispatchEvent(e);
+  };
+  track.dispatchEvent(new win.Event("pointerdown", { bubbles: true }));
+
+  // Pulling down flies in: the globe fades out and the map takes the gestures.
+  drag(0.9);
+  expect(parseFloat(thumb.style.top)).toBeGreaterThan(80);
+  expect(Number(globe.style.opacity)).toBe(0);
+  expect(map.getAttribute("aria-hidden")).toBe("false");
+  expect(map.style.pointerEvents).toBe("auto");
+  expect(track.getAttribute("aria-valuetext")).not.toBe("Globe");
+
+  // Pushing back up returns to the globe, so there is always a way home.
+  drag(0);
+  expect(Number(globe.style.opacity)).toBe(1);
+  expect(map.getAttribute("aria-hidden")).toBe("true");
+  expect(track.getAttribute("aria-valuetext")).toBe("Globe");
+
+  track.dispatchEvent(new win.Event("pointerup", { bubbles: true }));
+});
+
+test("the stick and the map agree on where a zoom level sits", async () => {
+  const { zoomForValue, valueForZoom, mapOpacity, FADE_START } = await import("../src/map");
+  const { TILE_MAX_ZOOM } = await import("../src/config");
+
+  expect(zoomForValue(0)).toBe(0);
+  expect(zoomForValue(1)).toBe(TILE_MAX_ZOOM);
+  // Round-tripping must not drift, or a pinch would nudge the stick each time.
+  for (const z of [0, 1, 2.5, 4]) {
+    expect(zoomForValue(valueForZoom(z))).toBeCloseTo(z, 6);
+  }
+  // The globe owns the top of the travel outright.
+  expect(mapOpacity(0)).toBe(0);
+  expect(mapOpacity(FADE_START)).toBe(0);
+  expect(mapOpacity(1)).toBe(1);
 });

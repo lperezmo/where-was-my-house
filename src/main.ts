@@ -2,8 +2,8 @@ import { fetchFossils, fetchGeology, fetchTrack, geocode } from "./api";
 import { createLatitudeChart } from "./chart";
 import { renderFossils } from "./fossils";
 import { createGlobe } from "./globe";
-import { tileAgeFor } from "./config";
 import { createMap, hasTiles } from "./map";
+import { createZoomStick } from "./zoomstick";
 import { beltFor, describe, periodAt } from "./narrative";
 import { capture, positionAt } from "./position";
 import { renderPrompt } from "./prompt";
@@ -33,7 +33,7 @@ const promptEl = el("prompt");
 const themeGroup = el("theme");
 const themeBtns = [...themeGroup.querySelectorAll<HTMLButtonElement>("button[data-set]")];
 
-const globe = createGlobe(el("globe"), { onPick: (lat, lon) => openMap(lat, lon) });
+const globe = createGlobe(el("globe"), { onPick: flyToPick });
 const timeline = createTimeline(el("timeline"), { onSeek: seek, onScale: () => chart.redraw() });
 const chart = createLatitudeChart(el("chart"), timeline.scale, seek);
 
@@ -140,58 +140,65 @@ splitEl.addEventListener("keydown", (e) => {
   applySplit(current + delta, wide);
 });
 
-/* Map ---------------------------------------------------------------------- */
-
-const exploreBtn = el<HTMLButtonElement>("explore");
-const mapNote = el("map-note");
-const mapTitle = el("map-title");
-const mapSub = el("map-sub");
-const mapView = createMap(el<HTMLDialogElement>("mapview"), () => {
-  exploreBtn.hidden = !hasTiles;
-});
+/* Map --------------------------------------------------------------------- */
 
 /**
- * The paleo map is only offered when a tile bucket is configured, so a fork
- * without one shows a globe that works rather than a button that cannot.
+ * Clicking the globe descends onto that spot rather than jumping somewhere with
+ * no way back: the stick moves with it, so the way home is always visible.
  */
-if (hasTiles) exploreBtn.hidden = false;
-
-function openMap(lat?: number, lon?: number) {
+function flyToPick(lat: number, lon: number) {
   if (!hasTiles || !track) return;
-  const step = positionAt(track.steps, ageMa);
-  const at = { lat: lat ?? step?.lat, lon: lon ?? step?.lon };
-  if (at.lat == null || at.lon == null) {
-    status("The model has no position for this ground at this age.");
-    return;
-  }
-  exploreBtn.hidden = true;
-  mapView.open({ lat: at.lat, lon: at.lon, ageMa });
-  if (step) mapView.setMarker(step.lat, step.lon);
-  updateMapNote();
+  const value = Math.max(zoom.value(), 0.45);
+  zoom.setValue(value, true);
+  applyZoom(value, false);
+  mapView.setCenter(lat, lon);
 }
 
-function updateMapNote() {
-  if (!mapView.isOpen) return;
-  mapTitle.textContent = placeLabel;
-  mapSub.textContent = `${fmtAge(tileAgeFor(ageMa))} Ma · ${periodAt(ageMa).name}`;
-  mapNote.textContent =
-    "Elevation from the Scotese and Wright PaleoDEM, reconstructed on Merdith et al. 2021. " +
-    "Detail stops near 10 km per pixel, the native resolution of the model, so there is " +
-    "nothing finer to zoom into.";
+const stick = el("zoomstick");
+const mapEl = el("map");
+
+/**
+ * The stick is an altitude control: the top is the globe seen from furthest
+ * away, and pulling it down flies in until the map is at the finest zoom the
+ * elevation model supports. The screen never changes, so the address, the
+ * timeline and the theme all stay put while you descend.
+ */
+const mapView = createMap(mapEl, {
+  onZoom: (value) => {
+    zoom.setValue(value, true);
+    applyZoom(zoom.value(), false);
+  },
+});
+
+const zoom = createZoomStick(stick, {
+  onChange: (value) => applyZoom(value, true),
+  label: (value) => {
+    if (value <= 0.001) return "Globe";
+    const km = Math.round(9.8 * 2 ** (4 - zoomForStick(value)));
+    return km >= 1000 ? "Whole world" : `~${km} km/px`;
+  },
+});
+
+function zoomForStick(value: number): number {
+  return Math.min(4, Math.max(0, ((value - 0.1) / 0.9) * 4));
 }
 
-exploreBtn.addEventListener("click", () => openMap());
-el("map-close").addEventListener("click", () => mapView.close());
+function applyZoom(value: number, drivePosition: boolean) {
+  const step = track ? positionAt(track.steps, ageMa) : null;
+  const at = { lat: step?.lat ?? 0, lon: step?.lon ?? 0, ageMa };
+  mapView.setValue(value, at);
+  globeEl.style.opacity = String(1 - Math.min(1, Math.max(0, (value - 0.1) / 0.2)));
+  if (drivePosition && step && mapView.isLive) mapView.setMarker(step.lat, step.lon);
+}
 
-/** Returns to the reconstructed position, so exploring can never lose the point. */
-el("map-home").addEventListener("click", () => {
-  const step = track && positionAt(track.steps, ageMa);
-  if (step) mapView.flyTo(step.lat, step.lon);
-});
+const globeEl = el("globe");
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && mapView.isOpen) mapView.close();
-});
+/** Only offered when a tile bucket is configured, so a fork without one is unaffected. */
+if (hasTiles) stick.hidden = false;
+
+// Start explicitly at the globe rather than relying on the stylesheet alone,
+// so the map layer is inert from the first frame.
+applyZoom(0, false);
 
 /* Status ------------------------------------------------------------------ */
 
@@ -249,10 +256,12 @@ function render() {
   globe.setAge(ageMa);
   chart.setAge(ageMa);
   timeline.setAge(ageMa);
-  if (mapView.isOpen) {
+  if (mapView.isLive) {
     mapView.setAge(ageMa);
-    if (step) mapView.setMarker(step.lat, step.lon);
-    updateMapNote();
+    if (step) {
+      mapView.setMarker(step.lat, step.lon);
+      mapView.setCenter(step.lat, step.lon);
+    }
   }
   scheduleFossils();
 }

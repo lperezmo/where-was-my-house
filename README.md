@@ -42,10 +42,15 @@ Macrostrat's rock record is largely North America. Outside it, "no coverage" and
 
 ## The map
 
-Tapping "Explore the map" opens the reconstructed paleogeography for the age you
-are scrubbed to: elevation from the Scotese and Wright PaleoDEM draped on
-Merdith 2021 reconstructions, 109 ages at 5 Myr steps, rendered by the
-deeptime-open pipeline.
+The stick on the right of the globe is an altitude control. The top is the
+planet seen from furthest away; pulling it down flies in, crossfading the globe
+into the reconstructed paleogeography for the age you are scrubbed to and then
+zooming that map to its limit. The screen never changes, so the address, the
+timeline and the theme stay where they are the whole way down.
+
+Elevation is the Scotese and Wright PaleoDEM draped on Merdith 2021
+reconstructions, 109 ages at 5 Myr steps, rendered by the deeptime-open
+pipeline.
 
 Zoom stops at level 4. A z4 pixel is about 9.8 km at the equator and the
 PaleoDEM cell is 6 arcminutes, about 11 km, so there is nothing finer to show:
@@ -54,7 +59,12 @@ paleo-elevation reconstruction, not the renderer.
 
 The tiles are 1.4 GB, too much for the repo or a Vercel deployment, so they live
 in object storage. Set `VITE_TILE_BASE` to the public bucket URL; without it the
-map is simply not offered and the rest of the app works unchanged.
+stick is not shown and the rest of the app works unchanged.
+
+The bucket needs a CORS policy allowing the site origin. MapLibre requests
+raster tiles with `crossOrigin`, because WebGL cannot texture from a tainted
+canvas, so without `Access-Control-Allow-Origin` the tiles download and are then
+discarded, and the map stays blank with no obvious error.
 
 ## Stack
 

@@ -4,10 +4,17 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 export interface MapHandle {
   setAge(ageMa: number): void;
-  flyTo(lat: number, lon: number): void;
+  setCenter(lat: number, lon: number): void;
   setMarker(lat: number, lon: number): void;
+  setZoom(z: number): void;
+  getZoom(): number;
   resize(): void;
   destroy(): void;
+}
+
+export interface MountOptions {
+  /** Fired when the map's own gestures change zoom, so the stick can follow. */
+  onZoom?(z: number): void;
 }
 
 function sourceFor(age: number) {
@@ -24,14 +31,15 @@ function sourceFor(age: number) {
 
 export function mountMap(
   container: HTMLElement,
-  start: { lat: number; lon: number; ageMa: number },
+  start: { lat: number; lon: number; ageMa: number; zoom: number },
+  opts: MountOptions = {},
 ): MapHandle {
   let age = tileAgeFor(start.ageMa);
 
   const map = new MlMap({
     container,
     center: [start.lon, start.lat],
-    zoom: 2.5,
+    zoom: start.zoom,
     minZoom: 0,
     // Half a step past the last tile level, so the final zoom is a gentle
     // overzoom of real data rather than a hard stop mid-gesture.
@@ -59,6 +67,13 @@ export function mountMap(
   let ready = false;
   map.on("load", () => (ready = true));
 
+  // Only report gestures the user drove, or the stick and the map would chase
+  // each other every time one set the other.
+  let echo = false;
+  map.on("zoom", () => {
+    if (!echo && opts.onZoom) opts.onZoom(map.getZoom());
+  });
+
   /**
    * Each age is a separate tile pyramid, so changing age swaps the source
    * rather than the tile URL. Removing the layer first avoids a frame where the
@@ -79,9 +94,16 @@ export function mountMap(
       if (ready) swap(wanted);
       else map.once("load", () => swap(wanted));
     },
-    flyTo(lat, lon) {
-      map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 3), duration: 900 });
+    setCenter(lat, lon) {
+      map.easeTo({ center: [lon, lat], duration: 500 });
     },
+    setZoom(z) {
+      if (Math.abs(map.getZoom() - z) < 0.01) return;
+      echo = true;
+      map.setZoom(z);
+      echo = false;
+    },
+    getZoom: () => map.getZoom(),
     setMarker(lat, lon) {
       marker.setLngLat([lon, lat]);
     },
