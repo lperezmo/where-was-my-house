@@ -58,9 +58,9 @@ async function preflight(client: S3Client) {
   if (back !== stamp) throw new Error("wrote an object but read back something else");
   console.log("credentials work: wrote and read tiles/.preflight");
 
-  const base = process.env.R2_PUBLIC_BASE;
+  const base = process.env.VITE_TILE_BASE;
   if (!base) {
-    console.log("R2_PUBLIC_BASE is not set, so the public URL was not checked.");
+    console.log("VITE_TILE_BASE is not set, so the public URL was not checked.");
     return;
   }
   const url = `${base.replace(/\/$/, "")}/${key}`;

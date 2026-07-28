@@ -322,3 +322,14 @@ test("coastlines snap to the nearest reconstruction age and are cached", async (
   globe.destroy();
   host.remove();
 });
+
+test("the tile base is optional and normalised", async () => {
+  const { TILE_BASE, hasTiles, tileUrl } = await import("../src/config");
+  // Nothing is configured in test, so the map view must stay unavailable
+  // rather than requesting tiles from a URL that cannot answer.
+  expect(hasTiles).toBe(false);
+  expect(TILE_BASE).toBe("");
+  // A trailing slash in the env var must not produce a doubled separator.
+  expect(tileUrl(300, 3, 1, 2).includes("//tiles")).toBe(false);
+  expect(tileUrl(300, 3, 1, 2)).toBe("/tiles/300/3/1/2.png");
+});
