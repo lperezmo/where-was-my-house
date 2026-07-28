@@ -40,17 +40,35 @@ last known point under an older label.
 Macrostrat's rock record is largely North America. Outside it, "no coverage" and
 "no rock of this age preserved here" are kept as separate answers.
 
+## The map
+
+Tapping "Explore the map" opens the reconstructed paleogeography for the age you
+are scrubbed to: elevation from the Scotese and Wright PaleoDEM draped on
+Merdith 2021 reconstructions, 109 ages at 5 Myr steps, rendered by the
+deeptime-open pipeline.
+
+Zoom stops at level 4. A z4 pixel is about 9.8 km at the equator and the
+PaleoDEM cell is 6 arcminutes, about 11 km, so there is nothing finer to show:
+past that point a map would be upsampling detail nobody measured. The limit is
+paleo-elevation reconstruction, not the renderer.
+
+The tiles are 1.4 GB, too much for the repo or a Vercel deployment, so they live
+in object storage. Set `VITE_TILE_BASE` to the public bucket URL; without it the
+map is simply not offered and the rest of the app works unchanged.
+
 ## Stack
 
-Vite, TypeScript. Vercel functions on the Bun runtime. No UI framework, no chart
-library, no map library: the globe, the timeline and the latitude chart are all
-hand-rolled SVG. Initial payload is about 14 kB gzipped.
+Vite, TypeScript. Vercel functions on the Bun runtime. No UI framework and no
+chart library: the globe, the timeline and the latitude chart are all hand-rolled
+SVG, and the initial payload is about 17 kB gzipped. MapLibre is used only for
+the tiled map and is fetched on demand, so it costs nothing until it is opened.
 
 | Service | Used for | Key needed |
 |---|---|---|
 | [GPlates Web Service](https://gws.gplates.org) | point reconstruction and coastlines, Merdith et al. 2021 model | no |
 | [Paleobiology Database](https://paleobiodb.org) | fossil occurrences | no |
 | [Macrostrat](https://macrostrat.org) | local rock units, lithology, depositional environment | no |
+| [PALEOMAP PaleoDEM](https://zenodo.org/records/5460860) | paleo-elevation for the map tiles, CC BY 4.0 | no |
 | [Nominatim](https://nominatim.openstreetmap.org) | geocoding | no |
 
 ## Develop
@@ -87,5 +105,5 @@ extrapolated beyond them.
 
 Merdith et al. (2021) rotation model via the GPlates Web Service, EarthByte
 Group. Fossil occurrence data from the Paleobiology Database. Rock unit data
-from Macrostrat, CC BY 4.0. Geocoding from Nominatim and OpenStreetMap
-contributors.
+from Macrostrat, CC BY 4.0. Paleo-elevation from Scotese and Wright, PALEOMAP
+PaleoDEMs, CC BY 4.0. Geocoding from Nominatim and OpenStreetMap contributors.

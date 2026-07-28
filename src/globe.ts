@@ -12,6 +12,11 @@ export interface GlobeHandle {
   destroy(): void;
 }
 
+export interface GlobeOptions {
+  /** Fired when a point on the sphere is clicked. Clicks off the disc are ignored. */
+  onPick?(lat: number, lon: number): void;
+}
+
 const NS = "http://www.w3.org/2000/svg";
 const R = 150;
 const CX = 180;
@@ -33,7 +38,7 @@ interface Projected {
   front: boolean;
 }
 
-export function createGlobe(container: HTMLElement): GlobeHandle {
+export function createGlobe(container: HTMLElement, opts: GlobeOptions = {}): GlobeHandle {
   const root = svg("svg", {
     viewBox: "0 0 360 300",
     preserveAspectRatio: "xMidYMid meet",
@@ -242,6 +247,45 @@ export function createGlobe(container: HTMLElement): GlobeHandle {
       nowDot.setAttribute("r", q.front ? "6" : "0");
       pulse.setAttribute("r", q.front ? "11" : "0");
     }
+  }
+
+  /**
+   * Inverse orthographic: turns a click on the disc back into a place. Clicks
+   * outside the sphere return null, so the empty corners are not treated as a
+   * point on the far side of the world.
+   */
+  function unproject(px: number, py: number): { lat: number; lon: number } | null {
+    const dx = px - CX;
+    const dy = py - CY;
+    const rho = Math.hypot(dx, dy);
+    if (rho > R) return null;
+    if (rho < 1e-6) return { lat: cam.lat, lon: cam.lon };
+
+    const c = Math.asin(Math.min(1, rho / R));
+    const p0 = cam.lat * D2R;
+    const sinLat = Math.cos(c) * Math.sin(p0) + (-dy * Math.sin(c) * Math.cos(p0)) / rho;
+    const lat = Math.asin(Math.min(1, Math.max(-1, sinLat))) / D2R;
+    const lon =
+      cam.lon +
+      Math.atan2(
+        dx * Math.sin(c),
+        rho * Math.cos(c) * Math.cos(p0) + dy * Math.sin(c) * Math.sin(p0),
+      ) /
+        D2R;
+    return { lat, lon: ((lon + 540) % 360) - 180 };
+  }
+
+  if (opts.onPick) {
+    root.classList.add("globe-pickable");
+    root.addEventListener("click", (e) => {
+      const box = root.getBoundingClientRect();
+      // The SVG scales to fit, so the click has to come back through the viewBox.
+      const scale = Math.min(box.width / 360, box.height / 300);
+      const originX = box.left + (box.width - 360 * scale) / 2;
+      const originY = box.top + (box.height - 300 * scale) / 2;
+      const hit = unproject((e.clientX - originX) / scale, (e.clientY - originY) / scale);
+      if (hit) opts.onPick!(hit.lat, hit.lon);
+    });
   }
 
   function tick() {

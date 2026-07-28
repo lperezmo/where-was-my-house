@@ -19,3 +19,27 @@ export const hasTiles = TILE_BASE.length > 0;
 export function tileUrl(age: number, z: number, x: number, y: number): string {
   return `${TILE_BASE}/tiles/${age}/${z}/${x}/${y}.png`;
 }
+
+/**
+ * Tiles exist every 5 Myr from 0 to 540, rendered by the deeptime-open pipeline
+ * from the Scotese and Wright PaleoDEM on Merdith2021 reconstructions.
+ *
+ * These live here rather than beside the map so the orchestrator can label the
+ * view without importing the map module, which would pull MapLibre into the
+ * initial bundle and undo the whole point of loading it on demand.
+ */
+const TILE_STEP = 5;
+export const TILE_MAX_AGE = 540;
+
+/**
+ * Zoom stops at 4 because that is where the source data stops. A z4 pixel is
+ * about 9.8 km at the equator and the PaleoDEM cell is 6 arcminutes, about
+ * 11 km, so anything past this would be upsampling: detail that was never
+ * measured. The ceiling is paleo-elevation reconstruction, not the pipeline.
+ */
+export const TILE_MAX_ZOOM = 4;
+
+export function tileAgeFor(ageMa: number): number {
+  const snapped = Math.round(ageMa / TILE_STEP) * TILE_STEP;
+  return Math.min(TILE_MAX_AGE, Math.max(0, snapped));
+}
