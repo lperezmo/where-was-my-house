@@ -1,4 +1,4 @@
-import type { FossilResult, GeoResult, Track } from "./types";
+import type { FossilResult, GeologyResult, GeoResult, Track } from "./types";
 
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   const res = await fetch(path, { signal });
@@ -15,6 +15,17 @@ export function geocode(q: string, signal?: AbortSignal) {
 
 export function fetchTrack(lat: number, lon: number, signal?: AbortSignal) {
   return get<Track>(`/api/track?lat=${lat}&lon=${lon}`, signal);
+}
+
+export function fetchGeology(
+  lat: number,
+  lon: number,
+  maxMa: number,
+  minMa: number,
+  signal?: AbortSignal,
+) {
+  const q = `lat=${lat}&lon=${lon}&maxMa=${maxMa}&minMa=${minMa}`;
+  return get<GeologyResult>(`/api/geology?${q}`, signal);
 }
 
 export function fetchFossils(

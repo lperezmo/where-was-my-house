@@ -1,4 +1,5 @@
-import { fetchFossils, fetchTrack, geocode } from "./api";
+import { fetchFossils, fetchGeology, fetchTrack, geocode } from "./api";
+import { renderPrompt } from "./prompt";
 import { createLatitudeChart, createScrubber } from "./chart";
 import { createGlobe } from "./globe";
 import { renderFossils } from "./fossils";
@@ -15,6 +16,7 @@ const statusEl = el<HTMLDivElement>("status");
 const ageLabel = el<HTMLDivElement>("age-label");
 const narrativeEl = el<HTMLParagraphElement>("narrative");
 const fossilsEl = el<HTMLDivElement>("fossils");
+const promptEl = el<HTMLDivElement>("prompt");
 
 const globe = createGlobe(el("globe"));
 const chart = createLatitudeChart(el("chart"), seek);
@@ -22,6 +24,7 @@ const scrubber = createScrubber(el("scrubber"), seek);
 
 let track: Track | null = null;
 let ageMa = 0;
+let placeLabel = "this location";
 let trackAbort: AbortController | null = null;
 let fossilAbort: AbortController | null = null;
 let fossilTimer: number | undefined;
@@ -80,18 +83,40 @@ async function loadFossils() {
   if (!track) return;
   fossilAbort?.abort();
   fossilAbort = new AbortController();
+  const signal = fossilAbort.signal;
   const { lat, lon } = track.point;
   const span = Math.max(5, ageMa * 0.06);
-  try {
-    const res = await fetchFossils(lat, lon, ageMa + span, Math.max(0, ageMa - span), fossilAbort.signal);
-    renderFossils(fossilsEl, res, ageMa);
-  } catch (err) {
-    if ((err as Error).name !== "AbortError") fossilsEl.innerHTML = "";
-  }
+  const maxMa = ageMa + span;
+  const minMa = Math.max(0, ageMa - span);
+  const at = ageMa;
+
+  const [fossils, geology] = await Promise.all([
+    fetchFossils(lat, lon, maxMa, minMa, signal).catch(() => null),
+    fetchGeology(lat, lon, maxMa, minMa, signal).catch(() => null),
+  ]);
+  if (signal.aborted) return;
+
+  if (fossils) renderFossils(fossilsEl, fossils, at);
+  else fossilsEl.textContent = "";
+
+  const step = stepAt(track, at);
+  renderPrompt(
+    promptEl,
+    step
+      ? {
+          step,
+          periodName: periodAt(at).name,
+          fossils: fossils?.records ?? [],
+          geology,
+          placeName: placeLabel,
+        }
+      : null,
+  );
 }
 
 async function show(place: GeoResult) {
   input.value = place.name;
+  placeLabel = place.name;
   suggestions.hidden = true;
   trackAbort?.abort();
   trackAbort = new AbortController();
