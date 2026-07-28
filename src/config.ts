@@ -39,6 +39,17 @@ export const TILE_MAX_AGE = 540;
  */
 export const TILE_MAX_ZOOM = 4;
 
+/**
+ * The deepest the map may go, which is one below the pyramid's own ceiling.
+ *
+ * MapLibre measures zoom against a 512 px grid, so a source of 256 px tiles
+ * renders tile level `mapZoom + 1`: at map zoom 3 the world is 4096 px across
+ * and z4 lands pixel for pixel. Asking the map for zoom 4 asks for a z5 tile
+ * that was never rendered, and MapLibre answers by stretching z4 to twice its
+ * size. Everything past this line is enlargement, not detail.
+ */
+export const MAP_MAX_ZOOM = TILE_MAX_ZOOM - 1;
+
 export function tileAgeFor(ageMa: number): number {
   const snapped = Math.round(ageMa / TILE_STEP) * TILE_STEP;
   return Math.min(TILE_MAX_AGE, Math.max(0, snapped));

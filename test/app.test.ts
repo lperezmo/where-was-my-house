@@ -289,23 +289,33 @@ test("the lever lands in notches rather than between them", async () => {
 test("the stick and the map agree on where a zoom level sits", async () => {
   const { zoomForValue, valueForZoom, mapOpacity, DETENTS, FADE_START, FADE_END } =
     await import("../src/map");
-  const { TILE_MAX_ZOOM } = await import("../src/config");
+  const { MAP_MAX_ZOOM, TILE_MAX_ZOOM } = await import("../src/config");
 
   expect(zoomForValue(0)).toBe(0);
-  expect(zoomForValue(1)).toBe(TILE_MAX_ZOOM);
+  expect(zoomForValue(1)).toBe(MAP_MAX_ZOOM);
   // Round-tripping must not drift, or a pinch would nudge the stick each time.
-  for (const z of [0, 1, 2.5, 4]) {
+  for (const z of [0, 1, 2.5, 3]) {
     expect(zoomForValue(valueForZoom(z))).toBeCloseTo(z, 6);
   }
 
-  // One notch for the globe and one per tile level, each on its own zoom.
-  expect(DETENTS.length).toBe(TILE_MAX_ZOOM + 2);
+  // One notch for the globe and one per map zoom, each on its own zoom.
+  expect(DETENTS.length).toBe(MAP_MAX_ZOOM + 2);
   expect(DETENTS[0].name).toBe("Globe");
   expect(DETENTS[0].detail).toBe("");
   for (let i = 1; i < DETENTS.length; i++) {
     expect(zoomForValue(DETENTS[i].value)).toBeCloseTo(i - 1, 6);
     expect(DETENTS[i].detail).not.toBe("");
   }
+
+  // MapLibre reads zoom off a 512 px grid, so a 256 px source draws tile level
+  // mapZoom + 1. The gate has to stop one below the pyramid's ceiling or the
+  // deepest notch asks for a tile that was never rendered and gets a stretched
+  // copy of z4 instead. This is the whole reason the map looked smeared.
+  expect(MAP_MAX_ZOOM).toBe(TILE_MAX_ZOOM - 1);
+  expect(zoomForValue(1) + 1).toBe(TILE_MAX_ZOOM);
+
+  // The deepest notch is the PaleoDEM at native scale, near its 6 arcminute cell.
+  expect(DETENTS[DETENTS.length - 1].detail).toBe("9.8 km/px");
 
   // The globe owns the top of the travel outright, and the crossfade is spent
   // before the first map notch, so no notch is a mix of the globe and the map.

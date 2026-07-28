@@ -1,5 +1,5 @@
 import { Map as MlMap, Marker } from "maplibre-gl";
-import { TILE_BASE, TILE_MAX_ZOOM, tileAgeFor } from "./config";
+import { MAP_MAX_ZOOM, TILE_BASE, TILE_MAX_ZOOM, tileAgeFor } from "./config";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 export interface MapHandle {
@@ -29,6 +29,24 @@ function sourceFor(age: number) {
   };
 }
 
+/**
+ * Left on MapLibre's linear resampling on purpose. Nearest was tried and looked
+ * worse: a phone paints two or three device pixels per tile pixel even at
+ * native scale, and hard edges turn every one of those into a visible square.
+ * The tiles are continuous shaded relief, not a category raster, so smoothing
+ * that last step up is what the content wants.
+ *
+ * Built once and reused, because changing age re-adds the layer and letting the
+ * two definitions drift would change how the map draws after the first seek.
+ */
+function paleoLayer() {
+  return {
+    id: "paleo",
+    type: "raster" as const,
+    source: "paleo",
+  };
+}
+
 export function mountMap(
   container: HTMLElement,
   start: { lat: number; lon: number; ageMa: number; zoom: number },
@@ -41,9 +59,10 @@ export function mountMap(
     center: [start.lon, start.lat],
     zoom: start.zoom,
     minZoom: 0,
-    // Half a step past the last tile level, so the final zoom is a gentle
-    // overzoom of real data rather than a hard stop mid-gesture.
-    maxZoom: TILE_MAX_ZOOM + 0.5,
+    // A hard stop where the tiles land pixel for pixel. The old half step past
+    // the last level, on top of the level MapLibre's 512 px zoom grid already
+    // costs a 256 px source, was compounding into a visibly smeared map.
+    maxZoom: MAP_MAX_ZOOM,
     attributionControl: { compact: true },
     dragRotate: false,
     pitchWithRotate: false,
@@ -52,7 +71,7 @@ export function mountMap(
       sources: { paleo: sourceFor(age) },
       layers: [
         { id: "sea", type: "background", paint: { "background-color": "#0b2033" } },
-        { id: "paleo", type: "raster", source: "paleo" },
+        paleoLayer(),
       ],
     },
   });
@@ -87,7 +106,7 @@ export function mountMap(
     if (map.getLayer("paleo")) map.removeLayer("paleo");
     if (map.getSource("paleo")) map.removeSource("paleo");
     map.addSource("paleo", sourceFor(age));
-    map.addLayer({ id: "paleo", type: "raster", source: "paleo" });
+    map.addLayer(paleoLayer());
   }
 
   return {
