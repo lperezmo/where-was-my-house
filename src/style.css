@@ -412,7 +412,15 @@ input::placeholder {
   background: radial-gradient(120% 80% at 50% 20%, var(--sky-1) 0%, var(--sky-2) 70%);
 }
 
+/**
+ * Above both the map layer and the altitude lever. The head is chrome: the
+ * address you are looking at and the theme you read it in have to stay
+ * reachable at every altitude, and unpositioned they sat under an absolute
+ * map that covered them the moment you left the globe.
+ */
 #stage-head {
+  position: relative;
+  z-index: 6;
   display: flex;
   gap: 10px;
   align-items: center;

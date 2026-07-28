@@ -33,10 +33,19 @@
 
 /* Altitude lever ---------------------------------------------------------- */
 
+/**
+ * Centred in the stage, but never so high that it reaches the head. A stage
+ * dragged short used to centre a lever taller than the space it had, putting
+ * the climb button over the theme switch, where a tap meant to change the
+ * theme moved the altitude instead. The floor is the head, a gap, and half a
+ * lever, so the two cannot meet however short the stage gets.
+ */
 #zoomstick {
+  --lever-half: 126px;
+
   position: absolute;
   right: 14px;
-  top: 50%;
+  top: max(50%, calc(var(--safe-top) + 64px + var(--lever-half)));
   z-index: 4;
   display: flex;
   flex-direction: column;
@@ -224,6 +233,10 @@
 }
 
 @media (max-width: 640px) {
+  #zoomstick {
+    --lever-half: 112px;
+  }
+
   #zoom-track {
     height: 140px;
   }

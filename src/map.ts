@@ -1,8 +1,8 @@
-import { hasTiles, TILE_MAX_ZOOM } from "./config";
+import { hasTiles, MAP_MAX_ZOOM, TILE_MAX_ZOOM } from "./config";
 import type { MapHandle } from "./mapview";
 import "./map.css";
 
-export { hasTiles, TILE_MAX_ZOOM };
+export { hasTiles, MAP_MAX_ZOOM, TILE_MAX_ZOOM };
 
 /**
  * One notch for the globe, then one for every tile level the pyramid actually
@@ -21,13 +21,16 @@ export interface Detent {
   detail: string;
 }
 
-/** A z0 tile is 256 px across a 40 075 km equator, so one pixel is this wide. */
-const KM_PER_PIXEL_Z0 = 156.5;
+/**
+ * At map zoom 0 the world is one 512 px grid across a 40 075 km equator, which
+ * is also exactly what a z1 tile resolves. Every notch below halves it.
+ */
+const KM_PER_PIXEL_Z0 = 40075 / 512;
 
 /** Named by the scale each level can actually resolve, coarsest first. */
-const NAMES = ["Globe", "World", "Continent", "Region", "Basin", "Terrain"];
+const NAMES = ["Globe", "World", "Continent", "Region", "Terrain"];
 
-const NOTCHES = TILE_MAX_ZOOM + 2;
+const NOTCHES = MAP_MAX_ZOOM + 2;
 
 export const DETENTS: Detent[] = Array.from({ length: NOTCHES }, (_, i) => {
   const z = Math.max(0, i - 1);
@@ -54,13 +57,13 @@ export function valueForStep(index: number): number {
 export const FADE_START = 0.02;
 export const FADE_END = DETENTS[1].value * 0.8;
 
-/** Stick position to map zoom. The first notch below the globe is z0. */
+/** Stick position to map zoom. The first notch below the globe is map zoom 0. */
 export function zoomForValue(value: number): number {
-  return Math.min(TILE_MAX_ZOOM, Math.max(0, value * (NOTCHES - 1) - 1));
+  return Math.min(MAP_MAX_ZOOM, Math.max(0, value * (NOTCHES - 1) - 1));
 }
 
 export function valueForZoom(z: number): number {
-  return (Math.min(TILE_MAX_ZOOM, Math.max(0, z)) + 1) / (NOTCHES - 1);
+  return (Math.min(MAP_MAX_ZOOM, Math.max(0, z)) + 1) / (NOTCHES - 1);
 }
 
 /** 0 while only the globe shows, 1 once the map has fully replaced it. */
