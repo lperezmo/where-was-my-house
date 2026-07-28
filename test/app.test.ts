@@ -114,11 +114,71 @@ test("the fossil list and image prompt render from real records", async () => {
   expect($("#prompt").querySelector(".prompt-copy")).not.toBeNull();
 });
 
-test("the theme toggle offers the other theme and persists the choice", () => {
-  const btn = $("#theme") as HTMLButtonElement;
-  const before = btn.textContent;
-  btn.click();
-  expect(btn.textContent).not.toBe(before);
-  expect(win.localStorage.getItem("wwmh-theme")).toBe(before!.toLowerCase());
-  expect(win.document.documentElement.dataset.theme).toBe(before!.toLowerCase());
+
+test("the theme control has three states and marks the active one", () => {
+  const btns = [...win.document.querySelectorAll("#theme button[data-set]")] as HTMLElement[];
+  expect(btns.map((b) => b.dataset.set)).toEqual(["dark", "auto", "light"]);
+
+  for (const want of ["light", "auto", "dark"]) {
+    btns.find((b) => b.dataset.set === want)!.click();
+    expect(win.document.documentElement.dataset.theme).toBe(want);
+    expect(win.localStorage.getItem("wwmh-theme")).toBe(want);
+    const checked = btns.filter((b) => b.getAttribute("aria-checked") === "true");
+    expect(checked.length).toBe(1);
+    expect(checked[0].dataset.set).toBe(want);
+  }
+});
+
+test("the split handle resizes the globe and clamps at the extremes", () => {
+  const split = $("#split");
+  const root = win.document.documentElement;
+  const realMatchMedia = win.matchMedia.bind(win);
+
+  const drag = (client: number, axis: "clientX" | "clientY") => {
+    const e = new win.Event("pointermove", { bubbles: true });
+    Object.defineProperty(e, axis, { value: client, configurable: true });
+    split.dispatchEvent(e);
+  };
+
+  // Narrow: the handle moves horizontally split between globe and readout.
+  win.matchMedia = ((q: string) =>
+    q.includes("900") ? { matches: false, addEventListener() {} } : realMatchMedia(q)) as never;
+  split.dispatchEvent(new win.Event("pointerdown", { bubbles: true }));
+
+  drag(win.innerHeight * 0.3, "clientY");
+  expect(parseFloat(root.style.getPropertyValue("--split"))).toBeCloseTo(30, 0);
+
+  // Dragging past either edge must not collapse a pane to nothing.
+  drag(-500, "clientY");
+  expect(parseFloat(root.style.getPropertyValue("--split"))).toBe(15);
+  drag(win.innerHeight * 5, "clientY");
+  expect(parseFloat(root.style.getPropertyValue("--split"))).toBe(85);
+
+  split.dispatchEvent(new win.Event("pointerup", { bubbles: true }));
+  expect(win.localStorage.getItem("wwmh-split")).toBe("85");
+
+  // Wide: the same handle drives the column width instead, stored separately.
+  win.matchMedia = ((q: string) =>
+    q.includes("900") ? { matches: true, addEventListener() {} } : realMatchMedia(q)) as never;
+  split.dispatchEvent(new win.Event("pointerdown", { bubbles: true }));
+  drag(win.innerWidth * 0.6, "clientX");
+  expect(parseFloat(root.style.getPropertyValue("--split-w"))).toBeCloseTo(40, 0);
+  expect(win.localStorage.getItem("wwmh-split")).toBe("85");
+  split.dispatchEvent(new win.Event("pointerup", { bubbles: true }));
+
+  win.matchMedia = realMatchMedia as never;
+});
+
+test("the chart and globe take every colour from the theme", async () => {
+  const { readFileSync } = await import("node:fs");
+  for (const file of ["chart.ts", "globe.ts"]) {
+    const src = readFileSync(`${root}/src/${file}`, "utf8");
+    // Colours belong in CSS so light mode can override them.
+    expect(src.match(/#[0-9a-fA-F]{6}\b/g) ?? []).toEqual([]);
+  }
+  const css = readFileSync(`${root}/src/style.css`, "utf8");
+  for (const token of ["--sea-1", "--land", "--band-tropical", "--chart-bg", "--star-show"]) {
+    // Once in the dark root, once per light selector.
+    expect(css.split(`${token}:`).length - 1).toBe(3);
+  }
 });

@@ -4,6 +4,73 @@
   height: 100%;
 }
 
+/* Gradient stops carry no presentation attributes, so the theme drives them. */
+.g-sea-1 {
+  stop-color: var(--sea-1);
+}
+.g-sea-2 {
+  stop-color: var(--sea-2);
+}
+.g-sea-3 {
+  stop-color: var(--sea-3);
+}
+.g-glow {
+  stop-color: var(--glow);
+}
+
+.globe-stars {
+  fill: var(--star);
+  opacity: var(--star-show);
+}
+
+.globe-land {
+  fill: var(--land);
+  stroke: var(--land-edge);
+  stroke-width: 0.4;
+}
+
+.globe-grat {
+  fill: none;
+  stroke: var(--grat);
+  stroke-width: 0.7;
+}
+
+.globe-rim {
+  fill: none;
+  stroke: var(--rim);
+  stroke-width: 0.9;
+  opacity: 0.55;
+}
+
+.globe-track-full,
+.globe-track-past {
+  fill: none;
+  stroke: var(--accent);
+}
+
+.globe-track-full {
+  stroke-width: 1.2;
+  opacity: 0.38;
+}
+
+.globe-track-past {
+  stroke-width: 1.6;
+  opacity: 0.85;
+}
+
+.globe-today {
+  fill: none;
+  stroke: var(--dim);
+  stroke-width: 1.2;
+  opacity: 0.8;
+}
+
+.globe-now {
+  fill: var(--accent);
+  stroke: var(--pin-ring);
+  stroke-width: 1.5;
+}
+
 @keyframes wwmh-pulse {
   0%,
   100% {
@@ -17,6 +84,7 @@
 }
 
 .globe-pulse {
+  fill: var(--accent);
   transform-box: fill-box;
   transform-origin: center;
   animation: wwmh-pulse 2.4s ease-out infinite;

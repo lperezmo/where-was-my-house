@@ -1,4 +1,4 @@
-import { positionAt } from "./position";
+import { capture, positionAt } from "./position";
 import type { TimeScale } from "./timeline";
 import type { Track } from "./types";
 import "./chart.css";
@@ -15,13 +15,13 @@ export interface ChartHandle {
   destroy(): void;
 }
 
-/** Absolute latitude cut-offs and their tints, mirrored into both hemispheres. */
+/** Absolute latitude cut-offs, mirrored into both hemispheres. Fills come from the theme. */
 const BANDS: [number, number, string][] = [
-  [66, 90, "rgb(150 196 232 / 0.11)"],
-  [45, 66, "rgb(122 168 208 / 0.075)"],
-  [30, 45, "rgb(147 161 181 / 0.055)"],
-  [15, 30, "rgb(224 164 94 / 0.075)"],
-  [0, 15, "rgb(224 164 94 / 0.135)"],
+  [66, 90, "polar"],
+  [45, 66, "subpolar"],
+  [30, 45, "temperate"],
+  [15, 30, "subtropical"],
+  [0, 15, "tropical"],
 ];
 
 const y = (lat: number) => ((90 - lat) / 180) * H;
@@ -42,64 +42,29 @@ export function createLatitudeChart(
 ): ChartHandle {
   const root = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart-svg", "aria-hidden": "true" });
 
-  for (const [lo, hi, fill] of BANDS) {
+  for (const [lo, hi, belt] of BANDS) {
     for (const sgn of [1, -1]) {
       const top = sgn > 0 ? y(hi) : y(-lo);
       const bottom = sgn > 0 ? y(lo) : y(-hi);
-      root.append(el("rect", { x: 0, y: top, width: W, height: bottom - top, fill }));
+      root.append(
+        el("rect", { x: 0, y: top, width: W, height: bottom - top, class: `band-${belt}` }),
+      );
     }
     for (const edge of [hi, -hi]) {
-      root.append(
-        el("line", {
-          x1: 0,
-          y1: y(edge),
-          x2: W,
-          y2: y(edge),
-          stroke: "var(--bg)",
-          "stroke-width": ".6",
-          opacity: ".55",
-        }),
-      );
+      root.append(el("line", { x1: 0, y1: y(edge), x2: W, y2: y(edge), class: "band-edge" }));
     }
   }
 
   root.append(
-    el("line", {
-      x1: 0,
-      y1: y(0),
-      x2: W,
-      y2: y(0),
-      stroke: "#93a1b5",
-      "stroke-width": ".6",
-      "stroke-dasharray": "2 4",
-      opacity: ".5",
-    }),
+    el("line", { x1: 0, y1: y(0), x2: W, y2: y(0), class: "chart-equator" }),
   );
-  const eq = el("text", {
-    x: 4,
-    y: y(0) - 3,
-    "font-size": "7",
-    fill: "#8a93a1",
-    "letter-spacing": ".08em",
-  });
+  const eq = el("text", { x: 4, y: y(0) - 3, class: "chart-equator-label" });
   eq.textContent = "EQUATOR";
   root.append(eq);
 
-  const curve = el("path", {
-    fill: "none",
-    stroke: "var(--text)",
-    "stroke-width": "1.6",
-    "stroke-linejoin": "round",
-    opacity: ".9",
-  });
-  const cursor = el("line", {
-    y1: 0,
-    y2: H,
-    stroke: "#e0a45e",
-    "stroke-width": "1",
-    opacity: "0",
-  });
-  const dot = el("circle", { r: 0, fill: "#e0a45e", stroke: "#0a0d12", "stroke-width": "1.4" });
+  const curve = el("path", { class: "chart-curve" });
+  const cursor = el("line", { y1: 0, y2: H, class: "chart-cursor", opacity: "0" });
+  const dot = el("circle", { r: 0, class: "chart-dot" });
   root.append(curve, cursor, dot);
   container.append(root);
 
@@ -154,7 +119,7 @@ export function createLatitudeChart(
   }
 
   container.addEventListener("pointerdown", (e) => {
-    container.setPointerCapture(e.pointerId);
+    capture(container, e);
     dragging = true;
     seek(e);
   });

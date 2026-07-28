@@ -1,4 +1,5 @@
 import { PERIODS } from "./periods";
+import { capture } from "./position";
 import type { Period, Track } from "./types";
 import "./timeline.css";
 
@@ -358,7 +359,7 @@ export function createTimeline(container: HTMLElement, opts: TimelineOptions): T
   }
 
   trackEl.addEventListener("pointerdown", (e) => {
-    trackEl.setPointerCapture(e.pointerId);
+    capture(trackEl, e);
     dragging = true;
     wrap.dataset.drag = "1";
     seek(e);
@@ -385,7 +386,7 @@ export function createTimeline(container: HTMLElement, opts: TimelineOptions): T
 
   ov.addEventListener("pointerdown", (e) => {
     if (level === 0) return;
-    ov.setPointerCapture(e.pointerId);
+    capture(ov, e);
     panning = true;
     pan(e);
   });

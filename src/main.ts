@@ -3,7 +3,7 @@ import { createLatitudeChart } from "./chart";
 import { renderFossils } from "./fossils";
 import { createGlobe } from "./globe";
 import { beltFor, describe, periodAt } from "./narrative";
-import { positionAt } from "./position";
+import { capture, positionAt } from "./position";
 import { renderPrompt } from "./prompt";
 import { createTimeline } from "./timeline";
 import type { GeoResult, Track } from "./types";
@@ -28,7 +28,8 @@ const narrativeEl = el("narrative");
 const legendNow = el("legend-now");
 const fossilsEl = el("fossils");
 const promptEl = el("prompt");
-const themeBtn = el<HTMLButtonElement>("theme");
+const themeGroup = el("theme");
+const themeBtns = [...themeGroup.querySelectorAll<HTMLButtonElement>("button[data-set]")];
 
 const globe = createGlobe(el("globe"));
 const timeline = createTimeline(el("timeline"), { onSeek: seek, onScale: () => chart.redraw() });
@@ -43,27 +44,98 @@ let fossilTimer: number | undefined;
 
 /* Theme ------------------------------------------------------------------- */
 
+const THEMES = ["dark", "auto", "light"];
 let theme = localStorage.getItem("wwmh-theme") ?? "auto";
-
-/** The button offers the theme you would switch to, not the one you are in. */
-function isDark(): boolean {
-  if (theme !== "auto") return theme === "dark";
-  return !window.matchMedia("(prefers-color-scheme: light)").matches;
-}
+if (!THEMES.includes(theme)) theme = "auto";
 
 function applyTheme() {
   document.documentElement.dataset.theme = theme;
-  const next = isDark() ? "Light" : "Dark";
-  themeBtn.textContent = next;
-  themeBtn.setAttribute("aria-label", `Switch to ${next.toLowerCase()} theme`);
+  for (const btn of themeBtns) {
+    btn.setAttribute("aria-checked", String(btn.dataset.set === theme));
+    btn.tabIndex = btn.dataset.set === theme ? 0 : -1;
+  }
 }
+
+for (const btn of themeBtns) {
+  btn.addEventListener("click", () => {
+    theme = btn.dataset.set ?? "auto";
+    localStorage.setItem("wwmh-theme", theme);
+    applyTheme();
+  });
+}
+
+/** Arrow keys move through the group, as a radiogroup is expected to. */
+themeGroup.addEventListener("keydown", (e) => {
+  const delta = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+  if (!delta) return;
+  e.preventDefault();
+  const next = THEMES[(THEMES.indexOf(theme) + delta + THEMES.length) % THEMES.length];
+  theme = next;
+  localStorage.setItem("wwmh-theme", theme);
+  applyTheme();
+  themeBtns.find((b) => b.dataset.set === theme)?.focus();
+});
 
 applyTheme();
 
-themeBtn.addEventListener("click", () => {
-  theme = isDark() ? "light" : "dark";
-  localStorage.setItem("wwmh-theme", theme);
-  applyTheme();
+/* Split ------------------------------------------------------------------- */
+
+const splitEl = el("split");
+const WIDE = "(min-width: 900px)";
+
+/**
+ * The globe takes a share of the screen the reader can change, so the readout
+ * and the copyable prompt can be given more room on a phone. Stored as a
+ * percentage so it survives a rotation or a different device.
+ */
+function applySplit(pct: number, wide: boolean) {
+  const clamped = Math.min(85, Math.max(15, pct));
+  if (wide) {
+    document.documentElement.style.setProperty("--split-w", `${(100 - clamped).toFixed(2)}%`);
+    localStorage.setItem("wwmh-split-w", String(clamped));
+  } else {
+    document.documentElement.style.setProperty("--split", `${clamped.toFixed(2)}%`);
+    localStorage.setItem("wwmh-split", String(clamped));
+  }
+}
+
+function restoreSplit() {
+  const wide = window.matchMedia(WIDE).matches;
+  const saved = Number(localStorage.getItem(wide ? "wwmh-split-w" : "wwmh-split"));
+  if (Number.isFinite(saved) && saved > 0) applySplit(saved, wide);
+}
+
+restoreSplit();
+window.matchMedia(WIDE).addEventListener("change", restoreSplit);
+
+let splitting = false;
+splitEl.addEventListener("pointerdown", (e) => {
+  capture(splitEl, e);
+  splitting = true;
+  splitEl.dataset.drag = "1";
+});
+splitEl.addEventListener("pointermove", (e) => {
+  if (!splitting) return;
+  const wide = window.matchMedia(WIDE).matches;
+  applySplit(wide ? (e.clientX / window.innerWidth) * 100 : (e.clientY / window.innerHeight) * 100, wide);
+});
+const endSplit = () => {
+  splitting = false;
+  delete splitEl.dataset.drag;
+};
+splitEl.addEventListener("pointerup", endSplit);
+splitEl.addEventListener("pointercancel", endSplit);
+
+splitEl.addEventListener("keydown", (e) => {
+  const wide = window.matchMedia(WIDE).matches;
+  const back = wide ? "ArrowLeft" : "ArrowUp";
+  const fwd = wide ? "ArrowRight" : "ArrowDown";
+  const delta = e.key === fwd ? 4 : e.key === back ? -4 : 0;
+  if (!delta) return;
+  e.preventDefault();
+  const key = wide ? "wwmh-split-w" : "wwmh-split";
+  const current = Number(localStorage.getItem(key)) || (wide ? 60 : 52);
+  applySplit(current + delta, wide);
 });
 
 /* Status ------------------------------------------------------------------ */

@@ -37,3 +37,16 @@ export function positionAt(steps: TrackStep[], age: number): TrackStep | null {
   }
   return null;
 }
+
+/**
+ * Browsers reject setPointerCapture for a pointer that has already been
+ * released, and it is never essential: without it a drag simply ends when the
+ * pointer leaves the element.
+ */
+export function capture(el: Element, e: PointerEvent): void {
+  try {
+    el.setPointerCapture(e.pointerId);
+  } catch {
+    /* the drag still works, it just will not follow the pointer outside */
+  }
+}
