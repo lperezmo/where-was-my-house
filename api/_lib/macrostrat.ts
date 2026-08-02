@@ -243,12 +243,12 @@ function slim(u: MacroUnit): MacroUnit {
   };
 }
 
-async function fetchRawUnits(lat: number, lon: number): Promise<RawUnits> {
-  const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+async function fetchRawUnits(lat: number, lon: number, adjacents: boolean): Promise<RawUnits> {
+  const key = `${lat.toFixed(2)},${lon.toFixed(2)},${adjacents}`;
   const cached = rawCache.get(key);
   if (cached) return cached;
 
-  const url = `${UNITS_BASE}?lat=${lat}&lng=${lon}&adjacents=true&response=long`;
+  const url = `${UNITS_BASE}?lat=${lat}&lng=${lon}&adjacents=${adjacents}&response=long`;
   const body = await fetchJson<MacroUnitsBody>(url, { timeoutMs: UNITS_TIMEOUT_MS });
   if (!body?.success || !Array.isArray(body.success.data)) {
     throw new UpstreamError("Geology service returned an unexpected response", 502);
@@ -269,20 +269,7 @@ export interface GeologyQuery {
   minMa: number;
 }
 
-export async function fetchGeology(q: GeologyQuery): Promise<GeologyResult> {
-  const key = `${q.lat.toFixed(2)},${q.lon.toFixed(2)},${q.maxMa},${q.minMa}`;
-  const cached = resultCache.get(key);
-  if (cached) return cached;
-
-  const [raw, vocab] = await Promise.all([
-    fetchRawUnits(q.lat, q.lon),
-    environmentClasses().catch(() => null),
-  ]);
-
-  // Any unit at all means Macrostrat maps this ground, whether or not rock of
-  // the requested age survived here.
-  const covered = raw.units.length > 0;
-
+function unitsFor(raw: RawUnits, q: GeologyQuery, vocab: Map<number, Marinity> | null): GeoUnit[] {
   const merged = new Map<string, { unit: GeoUnit; score: number; occurrences: number }>();
 
   for (const u of raw.units) {
@@ -336,7 +323,7 @@ export async function fetchGeology(q: GeologyQuery): Promise<GeologyResult> {
     });
   }
 
-  const units = [...merged.values()]
+  return [...merged.values()]
     .sort(
       (a, b) =>
         b.score - a.score ||
@@ -345,8 +332,33 @@ export async function fetchGeology(q: GeologyQuery): Promise<GeologyResult> {
     )
     .map((e) => e.unit)
     .slice(0, MAX_UNITS);
+}
 
-  const result: GeologyResult = { covered, units };
+export async function fetchGeology(q: GeologyQuery): Promise<GeologyResult> {
+  const key = `${q.lat.toFixed(2)},${q.lon.toFixed(2)},${q.maxMa},${q.minMa}`;
+  const cached = resultCache.get(key);
+  if (cached) return cached;
+
+  const [localRaw, vocab] = await Promise.all([
+    fetchRawUnits(q.lat, q.lon, false),
+    environmentClasses().catch(() => null),
+  ]);
+
+  // Any unit at all means Macrostrat maps this ground, whether or not rock of
+  // the requested age survived here.
+  const covered = localRaw.units.length > 0;
+  let units = unitsFor(localRaw, q, vocab);
+  let nearbyOnly = false;
+
+  // Adjacent columns are still useful context, but their evidence must not be
+  // presented as though it came from the exact point.
+  if (units.length === 0) {
+    const nearbyRaw = await fetchRawUnits(q.lat, q.lon, true);
+    units = unitsFor(nearbyRaw, q, vocab);
+    nearbyOnly = units.length > 0;
+  }
+
+  const result: GeologyResult = { covered, nearbyOnly, units };
   resultCache.set(key, result);
   return result;
 }
