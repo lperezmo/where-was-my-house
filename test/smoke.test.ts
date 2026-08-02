@@ -204,6 +204,35 @@ test("mixed marine and non-marine rock is reported as disagreement", async () =>
   expect(text).not.toContain("so this ground was underwater");
 });
 
+test("adjacent-only marine rock does not claim the exact point was underwater", async () => {
+  const { buildPrompt } = await import("../src/prompt");
+  const geology = {
+    covered: true,
+    nearbyOnly: true,
+    units: [
+      {
+        name: "Snowshoe Formation",
+        maxMa: 177,
+        minMa: 164,
+        liths: ["mudstone"],
+        environments: ["marine"],
+        setting: "marine",
+        refs: [],
+      },
+    ],
+  };
+  const text = buildPrompt({
+    step: { ageMa: 169, lat: 34, lon: -43 },
+    periodName: "Jurassic",
+    fossils: [],
+    geology: geology as never,
+    placeName: "45.6648, -118.7985",
+  });
+  expect(text).toContain("Nearby rock of this age is marine");
+  expect(text).toContain("conditions at this exact location are uncertain");
+  expect(text).not.toContain("this ground was underwater");
+});
+
 test("a track that stops early is never extrapolated", async () => {
   const { positionAt } = await import("../src/position");
   const steps = fakeTrack().steps.filter((s) => s.ageMa <= 410);

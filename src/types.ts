@@ -53,6 +53,8 @@ export interface GeoUnit {
 export interface GeologyResult {
   /** False outside Macrostrat's coverage, which is largely North America. */
   covered: boolean;
+  /** True when no rock of this age is mapped at the point and units come only from adjacent columns. */
+  nearbyOnly?: boolean;
   units: GeoUnit[];
 }
 

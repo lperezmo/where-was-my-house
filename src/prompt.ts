@@ -23,11 +23,6 @@ function hemisphere(lat: number): string {
   return `${Math.abs(Math.round(lat))} degrees ${lat >= 0 ? "north" : "south"}`;
 }
 
-/**
- * Macrostrat is queried with adjacents=true, so nearby columns of a different
- * character come back together. Asserting the top unit's setting produces
- * confident contradictions, so disagreement is reported as disagreement.
- */
 function settingPhrase(g: GeologyResult | null): string | null {
   const units = g?.units ?? [];
   if (!units.length) return null;
@@ -40,6 +35,18 @@ function settingPhrase(g: GeologyResult | null): string | null {
     .filter((e) => !/indet\.?$/i.test(e))
     .slice(0, 4);
   const where = envs.length ? ` (${envs.join(", ")})` : "";
+
+  if (g?.nearbyOnly) {
+    if (marine && !nonmarine && !mixed) {
+      return `Nearby rock of this age is marine${where}, suggesting marine conditions in the surrounding area; conditions at this exact location are uncertain`;
+    }
+    if (nonmarine && !marine && !mixed) {
+      return `Nearby rock of this age is non-marine${where}, suggesting dry land in the surrounding area; conditions at this exact location are uncertain`;
+    }
+    if (marine || nonmarine || mixed) {
+      return `Nearby rock of this age records both marine and non-marine conditions${where}, so the surrounding shoreline likely moved; conditions at this exact location are uncertain`;
+    }
+  }
 
   if (marine && !nonmarine && !mixed) {
     return `The rock preserved here from this time is marine${where}, so this ground was underwater`;
@@ -99,6 +106,11 @@ export function buildPrompt(ctx: PromptContext): string {
 function tierNote(ctx: PromptContext): string {
   const hasGeology = Boolean(ctx.geology?.units?.length);
   const hasLife = ctx.fossils.length > 0;
+  const nearbyGeology = hasGeology && ctx.geology?.nearbyOnly;
+  if (nearbyGeology && hasLife)
+    return "Grounded in the plate model, the nearby rock record and real fossil finds.";
+  if (nearbyGeology)
+    return "Grounded in the plate model and the nearby rock record. No fossils are recorded here for this age.";
   if (hasGeology && hasLife) return "Grounded in the plate model, the local rock record and real fossil finds.";
   if (hasGeology) return "Grounded in the plate model and the local rock record. No fossils are recorded here for this age.";
   if (hasLife) return "Grounded in the plate model and real fossil finds. The rock record here is not mapped.";
