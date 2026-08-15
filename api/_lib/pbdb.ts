@@ -6,6 +6,7 @@ const BOX_DEG = 1.5;
 const MAX_RECORDS = 40;
 const UPSTREAM_LIMIT = 300;
 const TIMEOUT_MS = 10000;
+const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
 const EARTH_KM = 6371;
 
 /**
@@ -172,7 +173,11 @@ export async function fetchFossils(q: FossilQuery): Promise<FossilResult> {
     `&max_ma=${q.maxMa}&min_ma=${q.minMa}` +
     `&show=coords,paleoloc,attr,class&limit=${UPSTREAM_LIMIT}`;
 
-  const body = await fetchJson<PbdbBody>(url, { timeoutMs: TIMEOUT_MS, acceptErrorBody: true });
+  const body = await fetchJson<PbdbBody>(url, {
+    timeoutMs: TIMEOUT_MS,
+    maxBytes: MAX_RESPONSE_BYTES,
+    acceptErrorBody: true,
+  });
 
   if (body && Array.isArray(body.errors) && body.errors.length > 0) {
     throw new UpstreamError("Fossil database rejected the query", 502);

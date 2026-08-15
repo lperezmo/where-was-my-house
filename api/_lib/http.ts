@@ -58,8 +58,46 @@ export class UpstreamError extends Error {
 export interface FetchJsonOptions {
   timeoutMs?: number;
   headers?: Record<string, string>;
+  /** Maximum decoded response bytes accepted before JSON parsing. */
+  maxBytes?: number;
   /** Parse and return the body even when the upstream status is not 2xx. */
   acceptErrorBody?: boolean;
+}
+
+const DEFAULT_MAX_JSON_BYTES = 2 * 1024 * 1024;
+
+async function readLimitedText(response: Response, maxBytes: number): Promise<string> {
+  const declared = response.headers.get("content-length");
+  if (declared && /^\d+$/.test(declared) && Number(declared) > maxBytes) {
+    throw new UpstreamError("Upstream response was too large", 502);
+  }
+
+  if (!response.body) return "";
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const parts: string[] = [];
+  let bytes = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > maxBytes) {
+        await reader.cancel().catch(() => {});
+        throw new UpstreamError("Upstream response was too large", 502);
+      }
+      parts.push(decoder.decode(value, { stream: true }));
+    }
+    parts.push(decoder.decode());
+    return parts.join("");
+  } catch (err) {
+    if (err instanceof UpstreamError) throw err;
+    throw new UpstreamError("Upstream returned an unreadable response", 502);
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 /**
@@ -67,7 +105,12 @@ export interface FetchJsonOptions {
  * caller: they get a short generic message and the status is normalized.
  */
 export async function fetchJson<T>(url: string, opts: FetchJsonOptions = {}): Promise<T> {
-  const { timeoutMs = 10000, headers, acceptErrorBody = false } = opts;
+  const {
+    timeoutMs = 10000,
+    headers,
+    maxBytes = DEFAULT_MAX_JSON_BYTES,
+    acceptErrorBody = false,
+  } = opts;
   let res: Response;
   try {
     res = await fetch(url, {
@@ -86,7 +129,10 @@ export async function fetchJson<T>(url: string, opts: FetchJsonOptions = {}): Pr
     );
   }
 
-  const text = await res.text().catch(() => "");
+  const responseLimit = Number.isFinite(maxBytes)
+    ? Math.max(1, Math.floor(maxBytes))
+    : DEFAULT_MAX_JSON_BYTES;
+  const text = await readLimitedText(res, responseLimit);
   try {
     return JSON.parse(text) as T;
   } catch {

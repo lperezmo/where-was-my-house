@@ -23,6 +23,8 @@ const MAX_ENVIRONMENTS = 8;
 const MAX_REFS = 5;
 const UNITS_TIMEOUT_MS = 12000;
 const DEFS_TIMEOUT_MS = 8000;
+const UNITS_MAX_BYTES = 8 * 1024 * 1024;
+const DEFS_MAX_BYTES = 1024 * 1024;
 
 // A zero-width window (the scrubber parked on a single age) makes every overlap
 // zero, so a floor keeps the score meaningful and reduces it to "prefer the
@@ -114,7 +116,10 @@ async function environmentClasses(): Promise<Map<number, Marinity>> {
   const hit = vocabCache.get(VOCAB_KEY);
   if (hit) return hit;
   if (!vocabInFlight) {
-    vocabInFlight = fetchJson<EnvironDefsBody>(ENVIRONMENTS_URL, { timeoutMs: DEFS_TIMEOUT_MS })
+    vocabInFlight = fetchJson<EnvironDefsBody>(ENVIRONMENTS_URL, {
+      timeoutMs: DEFS_TIMEOUT_MS,
+      maxBytes: DEFS_MAX_BYTES,
+    })
       .then((body) => {
         const map = new Map<number, Marinity>();
         for (const def of body?.success?.data ?? []) {
@@ -249,7 +254,10 @@ async function fetchRawUnits(lat: number, lon: number, adjacents: boolean): Prom
   if (cached) return cached;
 
   const url = `${UNITS_BASE}?lat=${lat}&lng=${lon}&adjacents=${adjacents}&response=long`;
-  const body = await fetchJson<MacroUnitsBody>(url, { timeoutMs: UNITS_TIMEOUT_MS });
+  const body = await fetchJson<MacroUnitsBody>(url, {
+    timeoutMs: UNITS_TIMEOUT_MS,
+    maxBytes: UNITS_MAX_BYTES,
+  });
   if (!body?.success || !Array.isArray(body.success.data)) {
     throw new UpstreamError("Geology service returned an unexpected response", 502);
   }
