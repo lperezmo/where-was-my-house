@@ -4,6 +4,7 @@ import { fetchJson, normalizeLon, TtlCache } from "./http";
 const BASE = "https://nominatim.openstreetmap.org/search";
 const MAX_RESULTS = 5;
 const TIMEOUT_MS = 8000;
+const MAX_RESPONSE_BYTES = 256 * 1024;
 
 // Nominatim's usage policy caps request rate, so repeat queries are served
 // locally for a day.
@@ -29,7 +30,10 @@ export async function geocode(q: string): Promise<GeoResult[]> {
   const url =
     `${BASE}?q=${encodeURIComponent(q.trim())}&format=jsonv2` +
     `&limit=${MAX_RESULTS}&addressdetails=0`;
-  const body = await fetchJson<NominatimHit[]>(url, { timeoutMs: TIMEOUT_MS });
+  const body = await fetchJson<NominatimHit[]>(url, {
+    timeoutMs: TIMEOUT_MS,
+    maxBytes: MAX_RESPONSE_BYTES,
+  });
 
   const results: GeoResult[] = [];
   for (const hit of Array.isArray(body) ? body : []) {
