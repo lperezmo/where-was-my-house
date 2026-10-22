@@ -55,9 +55,7 @@ export function createLatitudeChart(
     }
   }
 
-  root.append(
-    el("line", { x1: 0, y1: y(0), x2: W, y2: y(0), class: "chart-equator" }),
-  );
+  root.append(el("line", { x1: 0, y1: y(0), x2: W, y2: y(0), class: "chart-equator" }));
   const eq = el("text", { x: 4, y: y(0) - 3, class: "chart-equator-label" });
   eq.textContent = "EQUATOR";
   root.append(eq);

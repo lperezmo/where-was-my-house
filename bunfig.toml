@@ -1,2 +1,11 @@
+[fmt]
+# 100 gave the smallest diff against the existing code.
+printWidth = 100
+
+[lint]
+
+[lint.rules]
+"eqeqeq" = ["error", "smart"]
+
 [test]
 preload = ["./test/preload.ts"]

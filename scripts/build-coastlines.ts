@@ -82,7 +82,9 @@ async function fetchAge(age: number): Promise<Ring[]> {
 
   const res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
   if (!res.ok) throw new Error(`${age} Ma: HTTP ${res.status}`);
-  const body = (await res.json()) as { features?: { geometry: { type: string; coordinates: unknown } }[] };
+  const body = (await res.json()) as {
+    features?: { geometry: { type: string; coordinates: unknown } }[];
+  };
 
   const out: Ring[] = [];
   for (const feature of body.features ?? []) {

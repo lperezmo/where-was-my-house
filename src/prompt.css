@@ -29,7 +29,11 @@
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 8px;
-  font: 13px/1.55 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font:
+    13px/1.55 ui-monospace,
+    "Cascadia Mono",
+    Consolas,
+    monospace;
   color: var(--text);
   white-space: pre-wrap;
   overflow-wrap: anywhere;

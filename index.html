@@ -23,8 +23,8 @@
           <p id="intro-eyebrow">540 Ma to present</p>
           <h1>Where was my house</h1>
           <p id="intro-lede">
-            Enter an address. This follows that patch of ground backwards through
-            540 million years of plate motion.
+            Enter an address. This follows that patch of ground backwards through 540 million years
+            of plate motion.
           </p>
           <form id="search" autocomplete="off">
             <div id="search-row">
@@ -35,7 +35,12 @@
                 aria-label="Address or place"
                 enterkeyhint="search"
               />
-              <button id="locate" type="button" title="Use my location" aria-label="Use my location">
+              <button
+                id="locate"
+                type="button"
+                title="Use my location"
+                aria-label="Use my location"
+              >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                   <circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.6" />
                   <circle cx="10" cy="10" r="1.4" fill="currentColor" />
@@ -75,21 +80,46 @@
             <button id="change" type="button">Change</button>
           </div>
           <div id="theme" role="radiogroup" aria-label="Theme">
-            <button type="button" data-set="dark" role="radio" aria-checked="false" aria-label="Dark theme" title="Dark">
+            <button
+              type="button"
+              data-set="dark"
+              role="radio"
+              aria-checked="false"
+              aria-label="Dark theme"
+              title="Dark"
+            >
               <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M16.3 12.6A7 7 0 017.4 3.7a7 7 0 108.9 8.9z"
+                <path fill="currentColor" d="M16.3 12.6A7 7 0 017.4 3.7a7 7 0 108.9 8.9z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              data-set="auto"
+              role="radio"
+              aria-checked="false"
+              aria-label="Match system theme"
+              title="System"
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path fill="currentColor" d="M10 2a8 8 0 000 16z" />
+                <circle
+                  cx="10"
+                  cy="10"
+                  r="7.2"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
                 />
               </svg>
             </button>
-            <button type="button" data-set="auto" role="radio" aria-checked="false" aria-label="Match system theme" title="System">
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path fill="currentColor" d="M10 2a8 8 0 000 16z" />
-                <circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" stroke-width="1.5" />
-              </svg>
-            </button>
-            <button type="button" data-set="light" role="radio" aria-checked="false" aria-label="Light theme" title="Light">
+            <button
+              type="button"
+              data-set="light"
+              role="radio"
+              aria-checked="false"
+              aria-label="Light theme"
+              title="Light"
+            >
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <circle cx="10" cy="10" r="3.6" fill="currentColor" />
                 <path
@@ -106,22 +136,52 @@
         <div id="map" aria-hidden="true"></div>
 
         <div id="zoomstick" hidden>
-          <button id="zoom-out" type="button" title="Climb" aria-label="Climb, back towards the globe">
+          <button
+            id="zoom-out"
+            type="button"
+            title="Climb"
+            aria-label="Climb, back towards the globe"
+          >
             <svg viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M5 12l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" />
+              <path
+                d="M5 12l5-5 5 5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </button>
-          <div id="zoom-track" role="slider" tabindex="0" aria-label="Altitude"
-            aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" aria-valuetext="Globe">
+          <div
+            id="zoom-track"
+            role="slider"
+            tabindex="0"
+            aria-label="Altitude"
+            aria-valuemin="0"
+            aria-valuemax="4"
+            aria-valuenow="0"
+            aria-valuetext="Globe"
+          >
             <div id="zoom-gate" aria-hidden="true"></div>
             <div id="zoom-fill"></div>
             <div id="zoom-thumb"></div>
           </div>
-          <button id="zoom-in" type="button" title="Descend" aria-label="Descend, closer to the ground">
+          <button
+            id="zoom-in"
+            type="button"
+            title="Descend"
+            aria-label="Descend, closer to the ground"
+          >
             <svg viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" />
+              <path
+                d="M5 8l5 5 5-5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </button>
         </div>
@@ -130,11 +190,15 @@
           <span id="legend-today">today</span>
         </div>
         <div id="status" role="status" aria-live="polite"></div>
-
       </section>
 
-
-      <div id="split" role="separator" aria-label="Resize the globe" tabindex="0" aria-orientation="horizontal">
+      <div
+        id="split"
+        role="separator"
+        aria-label="Resize the globe"
+        tabindex="0"
+        aria-orientation="horizontal"
+      >
         <i></i>
       </div>
 
@@ -164,13 +228,13 @@
 
         <footer id="credits">
           <p>
-            Reconstruction: GPlates Web Service, Merdith et al. 2021 rotation model.
-            Fossils: Paleobiology Database. Rock record: Macrostrat (CC BY 4.0).
-            Geocoding: Nominatim / OpenStreetMap.
+            Reconstruction: GPlates Web Service, Merdith et al. 2021 rotation model. Fossils:
+            Paleobiology Database. Rock record: Macrostrat (CC BY 4.0). Geocoding: Nominatim /
+            OpenStreetMap.
           </p>
           <p>
-            Plate models are interpretations, not observations. Positions before the
-            Devonian carry real uncertainty.
+            Plate models are interpretations, not observations. Positions before the Devonian carry
+            real uncertainty.
           </p>
         </footer>
       </section>

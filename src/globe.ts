@@ -225,9 +225,7 @@ export function createGlobe(container: HTMLElement, opts: GlobeOptions = {}): Gl
     const steps = track.steps;
     trackFull.setAttribute("d", polyline(steps.map((s) => [s.lat, s.lon])));
 
-    const past: [number, number][] = steps
-      .filter((s) => s.ageMa <= age)
-      .map((s) => [s.lat, s.lon]);
+    const past: [number, number][] = steps.filter((s) => s.ageMa <= age).map((s) => [s.lat, s.lon]);
     const here = positionAt(steps, age);
     if (here) past.unshift([here.lat, here.lon]);
     trackPast.setAttribute("d", polyline(past));

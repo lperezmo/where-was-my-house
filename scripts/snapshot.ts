@@ -11,7 +11,10 @@ g.requestAnimationFrame = () => 0;
 g.cancelAnimationFrame = () => {};
 g.fetch = async (url: string) => {
   const age = String(url).match(/(\d+)\.json/)![1];
-  return { ok: true, json: async () => JSON.parse(readFileSync(`${root}/public/coastlines/${age}.json`, "utf8")) };
+  return {
+    ok: true,
+    json: async () => JSON.parse(readFileSync(`${root}/public/coastlines/${age}.json`, "utf8")),
+  };
 };
 
 const { createGlobe } = await import("../src/globe");
@@ -24,7 +27,10 @@ const css = readFileSync(`${root}/src/style.css`, "utf8")
 const globeCss = readFileSync(`${root}/src/globe.css`, "utf8");
 const chartCss = readFileSync(`${root}/src/chart.css`, "utf8");
 
-const themes: Record<string, string> = { dark: css[0], light: `${css[0]}\n${css[1].replace(':root[data-theme="light"]', ":root")}` };
+const themes: Record<string, string> = {
+  dark: css[0],
+  light: `${css[0]}\n${css[1].replace(':root[data-theme="light"]', ":root")}`,
+};
 
 for (const [theme, tokens] of Object.entries(themes)) {
   for (const age of [0, 300]) {
@@ -41,7 +47,10 @@ for (const [theme, tokens] of Object.entries(themes)) {
     svg.setAttribute("height", "400");
     writeFileSync(
       `${root}/snapshots/globe-${theme}-${age}Ma.svg`,
-      svg.outerHTML.replace("<defs>", `<style>${tokens}${globeCss}</style><rect width="360" height="300" fill="var(--sky-2)"/><defs>`),
+      svg.outerHTML.replace(
+        "<defs>",
+        `<style>${tokens}${globeCss}</style><rect width="360" height="300" fill="var(--sky-2)"/><defs>`,
+      ),
     );
     globe.destroy();
     host.remove();
@@ -60,7 +69,10 @@ for (const [theme, tokens] of Object.entries(themes)) {
   svg.setAttribute("height", "205");
   writeFileSync(
     `${root}/snapshots/chart-${theme}.svg`,
-    svg.outerHTML.replace("<rect", `<style>${tokens}${chartCss}</style><rect width="360" height="132" fill="var(--chart-bg)"/><rect`),
+    svg.outerHTML.replace(
+      "<rect",
+      `<style>${tokens}${chartCss}</style><rect width="360" height="132" fill="var(--chart-bg)"/><rect`,
+    ),
   );
   console.log(`${theme}: globe + chart`);
 }

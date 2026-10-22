@@ -162,8 +162,7 @@ const POSITION: ((age: string, where: string, belt: string) => string)[] = [
   (age, where, belt) =>
     `${age} million years ago the model places it ${where}, at ${belt} latitudes.`,
   (age, where, belt) => `This rock lay ${where} at ${age} Ma, inside the ${belt} belt.`,
-  (age, where, belt) =>
-    `The reconstruction puts it ${where} for ${age} Ma, a ${belt} position.`,
+  (age, where, belt) => `The reconstruction puts it ${where} for ${age} Ma, a ${belt} position.`,
   (age, where, belt) => `By ${age} Ma it had drifted ${where}, into the ${belt} belt.`,
 ];
 

@@ -2,7 +2,6 @@ import { expect, test, beforeAll } from "bun:test";
 import { Window } from "happy-dom";
 import { readFileSync } from "node:fs";
 
-
 const root = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 
 beforeAll(() => {
@@ -189,8 +188,24 @@ test("mixed marine and non-marine rock is reported as disagreement", async () =>
   const geology = {
     covered: true,
     units: [
-      { name: "A", maxMa: 35, minMa: 25, liths: [], environments: ["marine"], setting: "marine", refs: [] },
-      { name: "B", maxMa: 35, minMa: 25, liths: [], environments: ["fluvial"], setting: "nonmarine", refs: [] },
+      {
+        name: "A",
+        maxMa: 35,
+        minMa: 25,
+        liths: [],
+        environments: ["marine"],
+        setting: "marine",
+        refs: [],
+      },
+      {
+        name: "B",
+        maxMa: 35,
+        minMa: 25,
+        liths: [],
+        environments: ["fluvial"],
+        setting: "nonmarine",
+        refs: [],
+      },
     ],
   };
   const text = buildPrompt({
@@ -280,9 +295,10 @@ test("longitude interpolates the short way across the antimeridian", async () =>
 test("coastlines are drawn and stay inside the sphere", async () => {
   const { createGlobe } = await import("../src/globe");
   const { readFileSync } = await import("node:fs");
-  const rings = JSON.parse(
-    readFileSync(`${root}/public/coastlines/0.json`, "utf8"),
-  ) as [number, number][][];
+  const rings = JSON.parse(readFileSync(`${root}/public/coastlines/0.json`, "utf8")) as [
+    number,
+    number,
+  ][][];
 
   const calls: string[] = [];
   (globalThis as Record<string, unknown>).fetch = async (url: string) => {

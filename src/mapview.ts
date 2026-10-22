@@ -81,9 +81,7 @@ export function mountMap(
   // exactly the ambiguity the lever exists to remove.
   map.touchZoomRotate.disableRotation();
 
-  const marker = new Marker({ color: "#e0a45e" })
-    .setLngLat([start.lon, start.lat])
-    .addTo(map);
+  const marker = new Marker({ color: "#e0a45e" }).setLngLat([start.lon, start.lat]).addTo(map);
 
   let ready = false;
   map.on("load", () => (ready = true));

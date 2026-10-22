@@ -115,12 +115,11 @@
   top: 0;
   bottom: 0;
   left: 0;
-  background:
-    repeating-linear-gradient(
-      135deg,
-      rgb(10 13 18 / 0.72) 0 4px,
-      rgb(10 13 18 / 0.5) 4px 8px
-    );
+  background: repeating-linear-gradient(
+    135deg,
+    rgb(10 13 18 / 0.72) 0 4px,
+    rgb(10 13 18 / 0.5) 4px 8px
+  );
 }
 
 .tl-subs {

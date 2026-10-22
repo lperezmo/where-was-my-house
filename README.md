@@ -73,13 +73,13 @@ chart library: the globe, the timeline and the latitude chart are all hand-rolle
 SVG, and the initial payload is about 17 kB gzipped. MapLibre is used only for
 the tiled map and is fetched on demand, so it costs nothing until it is opened.
 
-| Service | Used for | Key needed |
-|---|---|---|
-| [GPlates Web Service](https://gws.gplates.org) | point reconstruction and coastlines, Merdith et al. 2021 model | no |
-| [Paleobiology Database](https://paleobiodb.org) | fossil occurrences | no |
-| [Macrostrat](https://macrostrat.org) | local rock units, lithology, depositional environment | no |
-| [PALEOMAP PaleoDEM](https://zenodo.org/records/5460860) | paleo-elevation for the map tiles, CC BY 4.0 | no |
-| [Nominatim](https://nominatim.openstreetmap.org) | geocoding | no |
+| Service                                                 | Used for                                                       | Key needed |
+| ------------------------------------------------------- | -------------------------------------------------------------- | ---------- |
+| [GPlates Web Service](https://gws.gplates.org)          | point reconstruction and coastlines, Merdith et al. 2021 model | no         |
+| [Paleobiology Database](https://paleobiodb.org)         | fossil occurrences                                             | no         |
+| [Macrostrat](https://macrostrat.org)                    | local rock units, lithology, depositional environment          | no         |
+| [PALEOMAP PaleoDEM](https://zenodo.org/records/5460860) | paleo-elevation for the map tiles, CC BY 4.0                   | no         |
+| [Nominatim](https://nominatim.openstreetmap.org)        | geocoding                                                      | no         |
 
 ## Develop
 

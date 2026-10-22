@@ -65,9 +65,4 @@ export interface Period {
   color: string;
 }
 
-export type ClimateBelt =
-  | "tropical"
-  | "subtropical"
-  | "temperate"
-  | "subpolar"
-  | "polar";
+export type ClimateBelt = "tropical" | "subtropical" | "temperate" | "subpolar" | "polar";
