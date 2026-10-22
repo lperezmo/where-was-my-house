@@ -86,8 +86,7 @@ function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): nu
   const dLat = (bLat - aLat) * r;
   const dLon = (bLon - aLon) * r;
   const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(aLat * r) * Math.cos(bLat * r) * Math.sin(dLon / 2) ** 2;
+    Math.sin(dLat / 2) ** 2 + Math.cos(aLat * r) * Math.cos(bLat * r) * Math.sin(dLon / 2) ** 2;
   return 2 * EARTH_KM * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 

@@ -111,9 +111,12 @@ function tierNote(ctx: PromptContext): string {
     return "Grounded in the plate model, the nearby rock record and real fossil finds.";
   if (nearbyGeology)
     return "Grounded in the plate model and the nearby rock record. No fossils are recorded here for this age.";
-  if (hasGeology && hasLife) return "Grounded in the plate model, the local rock record and real fossil finds.";
-  if (hasGeology) return "Grounded in the plate model and the local rock record. No fossils are recorded here for this age.";
-  if (hasLife) return "Grounded in the plate model and real fossil finds. The rock record here is not mapped.";
+  if (hasGeology && hasLife)
+    return "Grounded in the plate model, the local rock record and real fossil finds.";
+  if (hasGeology)
+    return "Grounded in the plate model and the local rock record. No fossils are recorded here for this age.";
+  if (hasLife)
+    return "Grounded in the plate model and real fossil finds. The rock record here is not mapped.";
   if (ctx.geology && !ctx.geology.covered)
     return "Grounded in the plate model only. Rock mapping does not cover this part of the world.";
   return "Grounded in the plate model only. No rock or fossil record here for this age.";

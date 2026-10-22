@@ -101,7 +101,9 @@ function text(v: unknown): string {
 }
 
 function marinity(v: unknown): Marinity | null {
-  const s = text(v).toLowerCase().replace(/[\s_]+/g, "-");
+  const s = text(v)
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-");
   if (s === "marine") return "marine";
   if (s === "non-marine" || s === "nonmarine") return "non-marine";
   return null;

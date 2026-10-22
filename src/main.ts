@@ -119,7 +119,10 @@ splitEl.addEventListener("pointerdown", (e) => {
 splitEl.addEventListener("pointermove", (e) => {
   if (!splitting) return;
   const wide = window.matchMedia(WIDE).matches;
-  applySplit(wide ? (e.clientX / window.innerWidth) * 100 : (e.clientY / window.innerHeight) * 100, wide);
+  applySplit(
+    wide ? (e.clientX / window.innerWidth) * 100 : (e.clientY / window.innerHeight) * 100,
+    wide,
+  );
 });
 const endSplit = () => {
   splitting = false;

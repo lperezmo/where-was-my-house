@@ -1,5 +1,12 @@
 import { buildTrack } from "./_lib/gplates";
-import { getQuery, isReadMethod, parseNumber, sendError, sendJson, UpstreamError } from "./_lib/http";
+import {
+  getQuery,
+  isReadMethod,
+  parseNumber,
+  sendError,
+  sendJson,
+  UpstreamError,
+} from "./_lib/http";
 
 // The reconstruction is a deterministic model output, so the edge can hold it
 // for a long time.

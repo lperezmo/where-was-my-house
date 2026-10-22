@@ -92,9 +92,10 @@ function row(entry: Entry): HTMLLIElement {
 
   const age = document.createElement("span");
   age.className = "fossil-age";
-  age.textContent = Number.isFinite(entry.maxMa) && Number.isFinite(entry.minMa)
-    ? `${num(entry.maxMa)} to ${num(entry.minMa)} Ma`
-    : "age not recorded";
+  age.textContent =
+    Number.isFinite(entry.maxMa) && Number.isFinite(entry.minMa)
+      ? `${num(entry.maxMa)} to ${num(entry.minMa)} Ma`
+      : "age not recorded";
 
   li.append(name, age);
   return li;
@@ -134,7 +135,9 @@ export function renderFossils(container: HTMLElement, r: FossilResult, ageMa: nu
   section.append(list);
 
   if (r.truncated) {
-    section.append(note("More records exist in this window than the search returned.", "fossils-caveat"));
+    section.append(
+      note("More records exist in this window than the search returned.", "fossils-caveat"),
+    );
   }
 
   container.append(section);

@@ -114,7 +114,6 @@ test("the fossil list and image prompt render from real records", async () => {
   expect($("#prompt").querySelector(".prompt-copy")).not.toBeNull();
 });
 
-
 test("the theme control has three states and marks the active one", () => {
   const btns = [...win.document.querySelectorAll("#theme button[data-set]")] as HTMLElement[];
   expect(btns.map((b) => b.dataset.set)).toEqual(["dark", "auto", "light"]);
@@ -182,9 +181,6 @@ test("the chart and globe take every colour from the theme", async () => {
     expect(css.split(`${token}:`).length - 1).toBe(3);
   }
 });
-
-
-
 
 test("tile ages snap to the 5 Myr grid the pipeline rendered", async () => {
   const { tileAgeFor, TILE_MAX_AGE, TILE_MAX_ZOOM } = await import("../src/config");
@@ -270,7 +266,8 @@ test("the lever lands in notches rather than between them", async () => {
   track.dispatchEvent(new win.Event("pointerup", { bubbles: true }));
 
   // One key press is one whole tile level, all the way down and back.
-  const key = (k: string) => track.dispatchEvent(new win.KeyboardEvent("keydown", { key: k, bubbles: true }));
+  const key = (k: string) =>
+    track.dispatchEvent(new win.KeyboardEvent("keydown", { key: k, bubbles: true }));
   key("Home");
   expect(track.getAttribute("aria-valuenow")).toBe("0");
   for (let i = 1; i < DETENTS.length; i++) {

@@ -41,7 +41,7 @@ export function clamp(n: number, lo: number, hi: number): number {
 
 /** Wrap longitude into -180..180 so clients never receive a wrapped-past value. */
 export function normalizeLon(lon: number): number {
-  let x = ((lon + 180) % 360 + 360) % 360 - 180;
+  let x = ((((lon + 180) % 360) + 360) % 360) - 180;
   if (Object.is(x, -0)) x = 0;
   return x;
 }
@@ -118,8 +118,12 @@ export async function fetchJson<T>(url: string, opts: FetchJsonOptions = {}): Pr
       headers: { Accept: "application/json", "User-Agent": USER_AGENT, ...headers },
     });
   } catch (err) {
-    const timedOut = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
-    throw new UpstreamError(timedOut ? "Upstream request timed out" : "Upstream request failed", 504);
+    const timedOut =
+      err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
+    throw new UpstreamError(
+      timedOut ? "Upstream request timed out" : "Upstream request failed",
+      504,
+    );
   }
 
   if (!res.ok && !acceptErrorBody) {

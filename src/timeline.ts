@@ -519,14 +519,19 @@ export function createTimeline(container: HTMLElement, opts: TimelineOptions): T
       })
       .join("");
 
-    const spacing = view.hi <= 100 ? "5 Myr steps" : view.lo >= 100 ? "10 Myr steps" : "5 to 10 Myr steps";
+    const spacing =
+      view.hi <= 100 ? "5 Myr steps" : view.lo >= 100 ? "10 Myr steps" : "5 to 10 Myr steps";
     noteEl.textContent = track
       ? `${fmtAge(view.hi)} to ${fmtAge(view.lo)} Ma · ${inView} reconstructions · ${spacing}`
       : "";
 
     const era = eraAt(age);
     zoomIn.textContent =
-      level === 0 ? `Zoom in · ${era[0]}` : level === 1 ? `Zoom in · ${per.name}` : "Full extent · 540 Ma";
+      level === 0
+        ? `Zoom in · ${era[0]}`
+        : level === 1
+          ? `Zoom in · ${per.name}`
+          : "Full extent · 540 Ma";
     zoomIn.dataset.flat = level === 2 ? "1" : "0";
     zoomOut.hidden = level === 0;
     zoomOut.textContent = `← ${level === 2 ? era[0] : "Full extent"}`;

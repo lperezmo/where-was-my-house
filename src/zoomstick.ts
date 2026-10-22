@@ -88,7 +88,10 @@ export function createZoomStick(root: HTMLElement, opts: ZoomStickOptions): Zoom
 
     const notch = notches[i];
     track.setAttribute("aria-valuenow", String(i));
-    track.setAttribute("aria-valuetext", notch.detail ? `${notch.name}, ${notch.detail}` : notch.name);
+    track.setAttribute(
+      "aria-valuetext",
+      notch.detail ? `${notch.name}, ${notch.detail}` : notch.name,
+    );
     root.dataset.at = value <= 0 ? "top" : value >= 1 ? "bottom" : "mid";
   }
 
