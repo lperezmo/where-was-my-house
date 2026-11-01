@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/lperezmo/where-was-my-house/main/assets/logo.svg" alt="Where Was My House" width="380">
+</p>
+
 # Where Was My House
 
 Enter an address, get a 540-million-year biography of that patch of ground: the
