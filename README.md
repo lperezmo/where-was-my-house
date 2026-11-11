@@ -4,7 +4,9 @@ Enter an address, get a 540-million-year biography of that patch of ground: the
 path it took across the globe, the latitudes it sat at, the climate belts it
 passed through, and the fossils actually found in the rock there.
 
-**[wherewasmyhouse.vercel.app](https://wherewasmyhouse.vercel.app)**
+![The Space Needle's patch of ground stepping back from today to 494 million years ago: the globe redraws its coastlines for each age and the drift track grows across it.](docs/demo.gif)
+
+The hosted demo has been retired. [Develop](#develop) covers running it locally.
 
 Built mobile-first. No API keys.
 
